@@ -1,6 +1,7 @@
 import sys
 import random
 import heapq
+import numpy as np
 sys.setrecursionlimit(100000)
 
 #directions: 1 is up, 2 is right, 3 is down, 4 is left, 0 is nothing
@@ -72,8 +73,9 @@ def moveLeft(theBoard):
 	condensed = []
 	for y in range(4):
 		#move from leftmost to rightmost
-		for x in range(1,4):	
-			currentVal = theBoard[x][y]		#currentVal is the one we are moving
+		for x in range(1,4):
+			#currentVal is the one we are moving	
+			currentVal = theBoard[x][y]		
 			theBoard[x][y] = 0
 			if currentVal != 0:
 				for x2 in range(x-1,-1,-1):
@@ -180,9 +182,37 @@ def moveDown(theBoard):
 	return changes
 
 	
-def addSpecificTile(theBoard,val,pos):
-	theBoard[pos] = val
+def addSpecificTile(theBoard,val,x,y):
+	theBoard[x][y] = val
 
+
+#pass in a board, a number of remaining maxNode levels to check 
+#whether it is a max node (maxNode==True) or expecti node (maxNode==False)
+#return the value of the state given that many steps left
+#maxNodes decide between best moves for a board position
+#expectiNodes average values of each possible ensuing board position (after placing random tile)
+def expectimax(board,maxDepth,maxNode):
+	#return the score of the expecti nodes at maxDepth
+	if inEndState(board) or (maxDepth == 0 and !maxNode):
+		return heuristic(board)
+	
+	if maxNode:
+		for i in range(4):
+			newBoard = [[0 for x in range(4)] for x in range(4)]
+			for 
+		return max(expectimax(moveLeft(board),maxDepth-1,True),expectimax(moveRight(board),maxDepth-1,True),expectimax(moveUp(board),maxDepth-1,True),expectimax(moveDown(board),maxDepth-1,True))
+	
+	#value for an expectiNode: average of the value for each of its potential child nodes
+	value = 0
+	#holds all unfilled board points, stored as x,y pairs
+	unfilled = []
+	for x in range(4):
+		for y in range(4):
+			if board[x][y] == 0:
+				unfilled.append([x,y])
+	
+	if len(unfilled) == 0:
+		return expectimax()
 
 """
 
@@ -462,11 +492,11 @@ def heuristic(board):
 			
 	if corner > 10:
 		favorability += 20
-	
+		
 	wouldAdd = 40
-	'''
-	return favorability
 	
+	return favorability
+
 def genius(theBoard,turn,dir,maxWhenCalled):
 	if turn != 0:
 		if maxWhenCalled < 50 and turn == 3:
@@ -558,7 +588,7 @@ def genius(theBoard,turn,dir,maxWhenCalled):
 		
 	if turn == 0:
 		return change
-		
+	
 	return favorability + nextFavorability
 
 
@@ -649,6 +679,7 @@ def newTurn(theBoard):
 
 
 aBoard = [[0 for x in range(4)] for x in range(4)]
+theBoard = np
 addRandomTile(aBoard)
 addRandomTile(aBoard)
 #heuristicTest(aBoard,0)
