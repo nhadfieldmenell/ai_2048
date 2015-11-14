@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import random
 import heapq
@@ -34,10 +35,10 @@ def inEndState(theBoard):
 	for x in range(4):
 		for y in range(4):
 			if y != 3:
-				if theBoard[x][y] == theBoard[x][y+1]:
+				if theBoard[x,y] == theBoard[x,y+1]:
 					return False
 			if x != 3:
-				if theBoard[x][y] == theBoard[x+1][y]:
+				if theBoard[x,y] == theBoard[x+1,y]:
 					return False
 	return True
 		
@@ -52,7 +53,7 @@ def addRandomTile(theBoard):
 	emptySpots = []
 	for x in range(4):
 		for y in range(4):
-			if theBoard[x][y] == 0:
+			if theBoard[x,y] == 0:
 				emptySpots.append([x,y])
 				
 	if len(emptySpots) == 0:
@@ -64,7 +65,7 @@ def addRandomTile(theBoard):
 	if twoOrFour == 9:
 		newTileNum = 4
 		
-	theBoard[emptySpots[spotToFill][0]][emptySpots[spotToFill][1]] = newTileNum
+	theBoard[emptySpots[spotToFill][0],emptySpots[spotToFill][1]] = newTileNum
 
 
 def moveLeft(theBoard):
@@ -75,24 +76,24 @@ def moveLeft(theBoard):
 		#move from leftmost to rightmost
 		for x in range(1,4):
 			#currentVal is the one we are moving	
-			currentVal = theBoard[x][y]		
-			theBoard[x][y] = 0
+			currentVal = theBoard[x,y]		
+			theBoard[x,y] = 0
 			if currentVal != 0:
 				for x2 in range(x-1,-1,-1):
-					valAtSpot = theBoard[x2][y]
+					valAtSpot = theBoard[x2,y]
 					if valAtSpot != 0:
 						if valAtSpot == currentVal and condensed.count([x2,y]) == 0:
-							theBoard[x2][y] = 2*valAtSpot
+							theBoard[x2,y] = 2*valAtSpot
 							changes += 1
 							condensed.append([x2,y])
 						else:
-							theBoard[x2+1][y] = currentVal
+							theBoard[x2+1,y] = currentVal
 							if x2+1 != x:
 								changes+= 1
 						break
 					
 					elif x2 == 0:
-						theBoard[0][y] = currentVal
+						theBoard[0,y] = currentVal
 						changes += 1
 						break
 	return changes
@@ -103,24 +104,24 @@ def moveUp(theBoard):
 	condensed = []
 	for x in range(4):
 		for y in range(1,4):
-			currentVal = theBoard[x][y]
-			theBoard[x][y] = 0
+			currentVal = theBoard[x,y]
+			theBoard[x,y] = 0
 			if currentVal != 0:
 				for y2 in range(y-1,-1,-1):
-					valAtSpot = theBoard[x][y2]
+					valAtSpot = theBoard[x,y2]
 					if valAtSpot != 0:
 						if valAtSpot == currentVal and condensed.count([x,y2]) == 0:
-							theBoard[x][y2] = 2*valAtSpot
+							theBoard[x,y2] = 2*valAtSpot
 							changes += 1
 							condensed.append([x,y2])
 						else:
-							theBoard[x][y2+1] = currentVal
+							theBoard[x,y2+1] = currentVal
 							if y2+1 != y:
 								changes += 1
 						break
 						
 					elif y2 == 0:
-						theBoard[x][0] = currentVal
+						theBoard[x,0] = currentVal
 						changes += 1
 						break	
 	return changes
@@ -131,24 +132,24 @@ def moveRight(theBoard):
 	condensed = []
 	for y in range(4):
 		for x in range(2,-1,-1):
-			currentVal = theBoard[x][y]
-			theBoard[x][y] = 0
+			currentVal = theBoard[x,y]
+			theBoard[x,y] = 0
 			if currentVal != 0:
 				for x2 in range(x+1,4):
-					valAtSpot = theBoard[x2][y]
+					valAtSpot = theBoard[x2,y]
 					if valAtSpot != 0:
 						if valAtSpot == currentVal and condensed.count([x2,y]) == 0:
-							theBoard[x2][y] = 2*valAtSpot
+							theBoard[x2,y] = 2*valAtSpot
 							changes += 1
 							condensed.append([x2,y])
 						else:
-							theBoard[x2-1][y] = currentVal
+							theBoard[x2-1,y] = currentVal
 							if x2-1 != x:
 								changes += 1
 						break
 					
 					elif x2 == 3:
-						theBoard[3][y] = currentVal
+						theBoard[3,y] = currentVal
 						changes += 1
 						break	
 	return changes
@@ -159,31 +160,31 @@ def moveDown(theBoard):
 	condensed = []
 	for x in range(4):
 		for y in range(2,-1,-1):
-			currentVal = theBoard[x][y]
-			theBoard[x][y] = 0
+			currentVal = theBoard[x,y]
+			theBoard[x,y] = 0
 			if currentVal != 0:
 				for y2 in range(y+1,4):
-					valAtSpot = theBoard[x][y2]
+					valAtSpot = theBoard[x,y2]
 					if valAtSpot != 0:
 						if valAtSpot == currentVal and condensed.count([x,y2]) == 0:
-							theBoard[x][y2] = 2*valAtSpot
+							theBoard[x,y2] = 2*valAtSpot
 							changes += 1
 							condensed.append([x,y2])
 						else:
-							theBoard[x][y2-1] = currentVal
+							theBoard[x,y2-1] = currentVal
 							if y2-1 != y:
 								changes += 1
 						break
 						
 					elif y2 == 3:
-						theBoard[x][3] = currentVal
+						theBoard[x,3] = currentVal
 						changes += 1
 						break
 	return changes
 
 	
 def addSpecificTile(theBoard,val,x,y):
-	theBoard[x][y] = val
+	theBoard[x,y] = val
 
 
 #pass in a board, a number of remaining maxNode levels to check 
@@ -193,13 +194,12 @@ def addSpecificTile(theBoard,val,x,y):
 #expectiNodes average values of each possible ensuing board position (after placing random tile)
 def expectimax(board,maxDepth,maxNode):
 	#return the score of the expecti nodes at maxDepth
-	if inEndState(board) or (maxDepth == 0 and !maxNode):
+	if inEndState(board) or (maxDepth == 0 and not maxNode):
 		return heuristic(board)
 	
 	if maxNode:
 		for i in range(4):
-			newBoard = [[0 for x in range(4)] for x in range(4)]
-			for 
+			newBoard = np.copy(board)
 		return max(expectimax(moveLeft(board),maxDepth-1,True),expectimax(moveRight(board),maxDepth-1,True),expectimax(moveUp(board),maxDepth-1,True),expectimax(moveDown(board),maxDepth-1,True))
 	
 	#value for an expectiNode: average of the value for each of its potential child nodes
@@ -208,7 +208,7 @@ def expectimax(board,maxDepth,maxNode):
 	unfilled = []
 	for x in range(4):
 		for y in range(4):
-			if board[x][y] == 0:
+			if board[x,y] == 0:
 				unfilled.append([x,y])
 	
 	if len(unfilled) == 0:
@@ -600,22 +600,22 @@ def heuristicTest(board,count):
 	for x in range(4):
 		print ("+-----+-----+-----+-----+\n|", end = "")
 		for y in range(4):
-			if board[x][y] == 0:
+			if board[x,y] == 0:
 				print ("     |", end = "")
-			elif board[x][y] < 10:
+			elif board[x,y] < 10:
 				print(" ", end = " ")
-				print(board[x][y], end = "  |")
-			elif board[x][y] < 100:
+				print(board[x,y], end = "  |")
+			elif board[x,y] < 100:
 				print (" ", end = "")
-				print(board[x][y], end = "  |")
-			elif board[x][y] < 1000:
+				print(board[x,y], end = "  |")
+			elif board[x,y] < 1000:
 				print (" ", end = "")
-				print(board[x][y], end = " |")
-			elif board[x][y] < 10000:
+				print(board[x,y], end = " |")
+			elif board[x,y] < 10000:
 				print (" ", end = "")
-				print(board[x][y], end = "|")
-			elif board[x][y] < 100000:
-				print(board[x][y], end = "|")
+				print(board[x,y], end = "|")
+			elif board[x,y] < 100000:
+				print(board[x,y], end = "|")
 		print ("\n", end = "")
 	print ("+-----+-----+-----+-----+")
 	if inEndState(board):
@@ -636,22 +636,22 @@ def newTurn(theBoard):
 	for y in range(4):
 		print ("+-----+-----+-----+-----+\n|", end = "")
 		for x in range(4):
-			if theBoard[x][y] == 0:
+			if theBoard[x,y] == 0:
 				print ("     |", end = "")
-			elif theBoard[x][y] < 10:
+			elif theBoard[x,y] < 10:
 				print(" ", end = " ")
-				print(theBoard[x][y], end = "  |")
-			elif theBoard[x][y] < 100:
+				print(theBoard[x,y], end = "  |")
+			elif theBoard[x,y] < 100:
 				print (" ", end = "")
-				print(theBoard[x][y], end = "  |")
-			elif theBoard[x][y] < 1000:
+				print(theBoard[x,y], end = "  |")
+			elif theBoard[x,y] < 1000:
 				print (" ", end = "")
-				print(theBoard[x][y], end = " |")
-			elif theBoard[x][y] < 10000:
+				print(theBoard[x,y], end = " |")
+			elif theBoard[x,y] < 10000:
 				print (" ", end = "")
-				print(theBoard[x][y], end = "|")
-			elif theBoard[x][y] < 100000:
-				print(theBoard[x][y], end = "|")
+				print(theBoard[x,y], end = "|")
+			elif theBoard[x,y] < 100000:
+				print(theBoard[x,y], end = "|")
 		print ("\n", end = "")
 	print ("+-----+-----+-----+-----+")
 		
@@ -659,7 +659,7 @@ def newTurn(theBoard):
 	if inEndState(theBoard):
 		print("        Game Over")
 		return
-	userInput = input('Pick a move (a, w, s, d, g for genius, q for quit): ')
+	userInput = raw_input('Pick a move (a, w, s, d, g for genius, q for quit): ')
 	if userInput == "a":
 		change = moveLeft(theBoard)
 	elif userInput == "d":
@@ -679,11 +679,12 @@ def newTurn(theBoard):
 
 
 aBoard = [[0 for x in range(4)] for x in range(4)]
-theBoard = np
-addRandomTile(aBoard)
-addRandomTile(aBoard)
+theBoard = np.array(aBoard)
+print (theBoard)
+addRandomTile(theBoard)
+addRandomTile(theBoard)
 #heuristicTest(aBoard,0)
-newTurn(aBoard)
+newTurn(theBoard)
 
 ''''
 input_var = raw_input("Enter something:")
