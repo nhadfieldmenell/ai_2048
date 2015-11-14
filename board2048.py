@@ -6,26 +6,38 @@ sys.setrecursionlimit(100000)
 #directions: 1 is up, 2 is right, 3 is down, 4 is left, 0 is nothing
 #corners correspond to quadrant
 
+"""
+	 x0  x1  x2  x3
+	+---+---+---+---+
+ y0	|	|	|	|	|
+	+---+---+---+---+
+ y1	|	|	|	|	|
+	+---+---+---+---+
+ y2	|	|	|	|	|
+	+---+---+---+---+
+ y3	|	|	|	|	|
+	+---+---+---+---+
+
+"""
+
+#board is in end state if there is no free tile and no adjacent matching tiles
+#return False if there is no possible move
+#otherwise, return True
 def inEndState(theBoard):
-	for i in theBoard:
-		if i == 0:
-			return False
-			
-	for i in range(4):
-		j = i*4
-		if theBoard[j] == 0:
-			return False
-		if theBoard[j] == theBoard[j+1]:
-			return False
-		if i != 3:
-			for k in range(4):
-				if theBoard[j+k] == theBoard[j+k+4]:
+	for row in theBoard:
+		for spot in row:
+			if spot == 0:
+				return False
+	
+	#means all spaces are full
+	for x in range(4):
+		for y in range(4):
+			if y != 3:
+				if theBoard[x][y] == theBoard[x][y+1]:
 					return False
-		j = j+2
-		if theBoard[j] == theBoard[j-1]:
-			return False
-		if theBoard[j] == theBoard[j+1]:
-			return False
+			if x != 3:
+				if theBoard[x][y] == theBoard[x+1][y]:
+					return False
 	return True
 		
 
@@ -39,8 +51,8 @@ def addRandomTile(theBoard):
 	emptySpots = []
 	for x in range(4):
 		for y in range(4):
-			if theBoard[4*x+y] == 0:
-				emptySpots.append(4*x+y)
+			if theBoard[x][y] == 0:
+				emptySpots.append([x,y])
 				
 	if len(emptySpots) == 0:
 		return 0
@@ -50,132 +62,129 @@ def addRandomTile(theBoard):
 	newTileNum = 2
 	if twoOrFour == 9:
 		newTileNum = 4
-	
-	theBoard[emptySpots[spotToFill]] = newTileNum
+		
+	theBoard[emptySpots[spotToFill][0]][emptySpots[spotToFill][1]] = newTileNum
 
 
 def moveLeft(theBoard):
 	changes = 0
+	#holds the positions of the tiles that have already been condensed so you dont condense the same space twice
 	condensed = []
-	for x in range(4):
-		for y in range(1,4):	
-			currentVal = theBoard[4*x+y]		#currentVal is the one we are moving
-			theBoard[4*x+y] = 0
+	for y in range(4):
+		#move from leftmost to rightmost
+		for x in range(1,4):	
+			currentVal = theBoard[x][y]		#currentVal is the one we are moving
+			theBoard[x][y] = 0
 			if currentVal != 0:
-				for y2 in range(y-1,-1,-1):
-					valAtSpot = theBoard[4*x+y2]
+				for x2 in range(x-1,-1,-1):
+					valAtSpot = theBoard[x2][y]
 					if valAtSpot != 0:
-						if valAtSpot == currentVal and condensed.count(4*x+y2) == 0:
-							theBoard[4*x+y2] = 2*valAtSpot
+						if valAtSpot == currentVal and condensed.count([x2,y]) == 0:
+							theBoard[x2][y] = 2*valAtSpot
 							changes += 1
-							condensed.append(4*x+y2)
+							condensed.append([x2,y])
 						else:
-							theBoard[4*x+y2+1] = currentVal
-							if y2+1 != y:
+							theBoard[x2+1][y] = currentVal
+							if x2+1 != x:
 								changes+= 1
 						break
 					
-					elif y2 == 0:
-						theBoard[4*x] = currentVal
+					elif x2 == 0:
+						theBoard[0][y] = currentVal
 						changes += 1
-						break		
+						break
 	return changes
 
 
 def moveUp(theBoard):
 	changes = 0
 	condensed = []
-	for y in range(4):
-		for x in range(1,4):
-			currentVal = theBoard[4*x+y]
-			theBoard[4*x+y] = 0
+	for x in range(4):
+		for y in range(1,4):
+			currentVal = theBoard[x][y]
+			theBoard[x][y] = 0
 			if currentVal != 0:
-				for x2 in range(x-1,-1,-1):
-					valAtSpot = theBoard[4*x2+y]
+				for y2 in range(y-1,-1,-1):
+					valAtSpot = theBoard[x][y2]
 					if valAtSpot != 0:
-						if valAtSpot == currentVal and condensed.count(4*x2+y) == 0:
-							theBoard[4*x2+y] = 2*valAtSpot
+						if valAtSpot == currentVal and condensed.count([x,y2]) == 0:
+							theBoard[x][y2] = 2*valAtSpot
 							changes += 1
-							condensed.append(4*x2+y)
+							condensed.append([x,y2])
 						else:
-							theBoard[4*(x2+1)+y] = currentVal
-							if x2+1 != x:
+							theBoard[x][y2+1] = currentVal
+							if y2+1 != y:
 								changes += 1
 						break
 						
-					elif x2 == 0:
-						theBoard[y] = currentVal
+					elif y2 == 0:
+						theBoard[x][0] = currentVal
 						changes += 1
-						break
+						break	
 	return changes
 
 
 def moveRight(theBoard):
 	changes = 0
 	condensed = []
-	for x in range(4):
-		for y in range(2,-1,-1):
-			currentVal = theBoard[4*x+y]
-			#currentVal = theBoard[x][y]
-			#theBoard[x][y] = 0
-			theBoard[4*x+y] = 0
+	for y in range(4):
+		for x in range(2,-1,-1):
+			currentVal = theBoard[x][y]
+			theBoard[x][y] = 0
 			if currentVal != 0:
-				for y2 in range(y+1,4):
-					#valAtSpot = theBoard[x][y2]
-					valAtSpot = theBoard[4*x+y2]
+				for x2 in range(x+1,4):
+					valAtSpot = theBoard[x2][y]
 					if valAtSpot != 0:
-						if valAtSpot == currentVal and condensed.count(4*x+y2) == 0:
-							#theBoard[x][y2] = 2*valAtSpot
-							theBoard[4*x+y2] = 2*valAtSpot
+						if valAtSpot == currentVal and condensed.count([x2,y]) == 0:
+							theBoard[x2][y] = 2*valAtSpot
 							changes += 1
-							condensed.append(4*x+y2)
+							condensed.append([x2,y])
 						else:
-							#theBoard[x][y2-1] = currentVal
-							theBoard[4*x+y2-1] = currentVal
-							if y2-1 != y:
+							theBoard[x2-1][y] = currentVal
+							if x2-1 != x:
 								changes += 1
 						break
 					
-					elif y2 == 3:
-						#theBoard[x][3] = currentVal
-						theBoard[4*x+3] = currentVal
+					elif x2 == 3:
+						theBoard[3][y] = currentVal
 						changes += 1
-						break
+						break	
 	return changes
 
 
 def moveDown(theBoard):
 	changes = 0
 	condensed = []
-	for y in range(4):
-		for x in range(2,-1,-1):
-			currentVal = theBoard[4*x+y]
-			theBoard[4*x+y] = 0
+	for x in range(4):
+		for y in range(2,-1,-1):
+			currentVal = theBoard[x][y]
+			theBoard[x][y] = 0
 			if currentVal != 0:
-				for x2 in range(x+1,4):
-					spot = 4*x2+y
-					valAtSpot = theBoard[spot]
+				for y2 in range(y+1,4):
+					valAtSpot = theBoard[x][y2]
 					if valAtSpot != 0:
-						if valAtSpot == currentVal and condensed.count(spot) == 0:
-							theBoard[spot] = 2*valAtSpot
+						if valAtSpot == currentVal and condensed.count([x,y2]) == 0:
+							theBoard[x][y2] = 2*valAtSpot
 							changes += 1
-							condensed.append(spot)
+							condensed.append([x,y2])
 						else:
-							theBoard[4*(x2-1)+y] = currentVal
-							if x2-1 != x:
+							theBoard[x][y2-1] = currentVal
+							if y2-1 != y:
 								changes += 1
 						break
 						
-					elif x2 == 3:
-						theBoard[spot] = currentVal
+					elif y2 == 3:
+						theBoard[x][3] = currentVal
 						changes += 1
 						break
 	return changes
 
-
+	
 def addSpecificTile(theBoard,val,pos):
 	theBoard[pos] = val
 
+
+"""
 
 def maxTile(board):
 	max = 0
@@ -183,8 +192,6 @@ def maxTile(board):
 		if board[i] > max:
 			max = board[i]
 	return max
-
-
 def snakeFavor(board,listHeap,corner,dir):
 	print("ding")
 	favor = 0
@@ -373,8 +380,6 @@ def snakeFavor(board,listHeap,corner,dir):
 			return favor
 	return favor
 
-			
-
 def heuristic(board):
 	favorability = 0
 	highest = max(board)
@@ -461,8 +466,7 @@ def heuristic(board):
 	wouldAdd = 40
 	'''
 	return favorability
-
-
+	
 def genius(theBoard,turn,dir,maxWhenCalled):
 	if turn != 0:
 		if maxWhenCalled < 50 and turn == 3:
@@ -501,7 +505,7 @@ def genius(theBoard,turn,dir,maxWhenCalled):
 	emptySpots = []
 	for x in range(4):
 		for y in range(4):
-			loc = 4*x+y
+			loc = [x,y]
 			if newBoard[loc] == 0:
 				emptySpots.append(loc)
 	
@@ -558,50 +562,6 @@ def genius(theBoard,turn,dir,maxWhenCalled):
 	return favorability + nextFavorability
 
 
-def newTurn(theBoard):
-	
-	#show board
-	for x in range(4):
-		print ("+-----+-----+-----+-----+\n|", end = "")
-		for y in range(4):
-			if theBoard[4*x+y] == 0:
-				print ("     |", end = "")
-			elif theBoard[4*x+y] < 10:
-				print(" ", end = " ")
-				print(theBoard[4*x+y], end = "  |")
-			elif theBoard[4*x+y] < 100:
-				print (" ", end = "")
-				print(theBoard[4*x+y], end = "  |")
-			elif theBoard[4*x+y] < 1000:
-				print (" ", end = "")
-				print(theBoard[4*x+y], end = " |")
-			elif theBoard[4*x+y] < 10000:
-				print (" ", end = "")
-				print(theBoard[4*x+y], end = "|")
-			elif theBoard[4*x+y] < 100000:
-				print(theBoard[4*x+y], end = "|")
-		print ("\n", end = "")
-	print ("+-----+-----+-----+-----+")
-		
-	change = 0
-	if inEndState(theBoard):
-		print("        Game Over")
-		return
-	userInput = input('Pick a move (a, w, s, d, g for genius): ')
-	if userInput == "a":
-		change = moveLeft(theBoard)
-	elif userInput == "d":
-		change = moveRight(theBoard)
-	elif userInput == "w":
-		change = moveUp(theBoard)
-	elif userInput == "s":
-		change = moveDown(theBoard)
-	elif userInput == "g":
-		change = genius(theBoard,0,0,0)
-	if change != 0:
-		addRandomTile(theBoard)
-	newTurn(theBoard)
-	return
 
 
 def heuristicTest(board,count):
@@ -610,22 +570,22 @@ def heuristicTest(board,count):
 	for x in range(4):
 		print ("+-----+-----+-----+-----+\n|", end = "")
 		for y in range(4):
-			if board[4*x+y] == 0:
+			if board[x][y] == 0:
 				print ("     |", end = "")
-			elif board[4*x+y] < 10:
+			elif board[x][y] < 10:
 				print(" ", end = " ")
-				print(board[4*x+y], end = "  |")
-			elif board[4*x+y] < 100:
+				print(board[x][y], end = "  |")
+			elif board[x][y] < 100:
 				print (" ", end = "")
-				print(board[4*x+y], end = "  |")
-			elif board[4*x+y] < 1000:
+				print(board[x][y], end = "  |")
+			elif board[x][y] < 1000:
 				print (" ", end = "")
-				print(board[4*x+y], end = " |")
-			elif board[4*x+y] < 10000:
+				print(board[x][y], end = " |")
+			elif board[x][y] < 10000:
 				print (" ", end = "")
-				print(board[4*x+y], end = "|")
-			elif board[4*x+y] < 100000:
-				print(board[4*x+y], end = "|")
+				print(board[x][y], end = "|")
+			elif board[x][y] < 100000:
+				print(board[x][y], end = "|")
 		print ("\n", end = "")
 	print ("+-----+-----+-----+-----+")
 	if inEndState(board):
@@ -638,8 +598,57 @@ def heuristicTest(board,count):
 	heuristicTest(board,count+1)
 	return
 
+"""	
+
+def newTurn(theBoard):
 	
-aBoard = [0 for x in range(16)]
+	#show board
+	for y in range(4):
+		print ("+-----+-----+-----+-----+\n|", end = "")
+		for x in range(4):
+			if theBoard[x][y] == 0:
+				print ("     |", end = "")
+			elif theBoard[x][y] < 10:
+				print(" ", end = " ")
+				print(theBoard[x][y], end = "  |")
+			elif theBoard[x][y] < 100:
+				print (" ", end = "")
+				print(theBoard[x][y], end = "  |")
+			elif theBoard[x][y] < 1000:
+				print (" ", end = "")
+				print(theBoard[x][y], end = " |")
+			elif theBoard[x][y] < 10000:
+				print (" ", end = "")
+				print(theBoard[x][y], end = "|")
+			elif theBoard[x][y] < 100000:
+				print(theBoard[x][y], end = "|")
+		print ("\n", end = "")
+	print ("+-----+-----+-----+-----+")
+		
+	change = 0
+	if inEndState(theBoard):
+		print("        Game Over")
+		return
+	userInput = input('Pick a move (a, w, s, d, g for genius, q for quit): ')
+	if userInput == "a":
+		change = moveLeft(theBoard)
+	elif userInput == "d":
+		change = moveRight(theBoard)
+	elif userInput == "w":
+		change = moveUp(theBoard)
+	elif userInput == "s":
+		change = moveDown(theBoard)
+	#elif userInput == "g":
+	#	change = genius(theBoard,0,0,0)
+	elif userInput == "q":
+		return
+	if change != 0:
+		addRandomTile(theBoard)
+	newTurn(theBoard)
+	return
+
+
+aBoard = [[0 for x in range(4)] for x in range(4)]
 addRandomTile(aBoard)
 addRandomTile(aBoard)
 #heuristicTest(aBoard,0)
