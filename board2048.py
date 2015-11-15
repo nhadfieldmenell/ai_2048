@@ -198,7 +198,17 @@ def addSpecificTile(theBoard,val,x,y):
 	theBoard[x,y] = val
 
 
+#the heuristic measures how good a state is
+#first checks if it is an end state (want to avoid)
+#then it sees if the largest is in a corner
+#then it sees for how many in a row down one edge are the values descending
+#only next-largest is considered so if 3rd largest is nex to the largest
+#   that only counts for the largest being in the corner
+#return the # of biggest->next biggest->next biggest there is starting from one corner and going along some edge
 def heuristic(board):
+	if inEndState(board):
+		return -2
+	
 	#push negative values to maintain 
 	#stores 3 tuples [-value,x,y]
 	h = []
@@ -206,14 +216,73 @@ def heuristic(board):
 		for y in range(4):
 			if board[x,y] != 0:
 				heapq.heappush(h,(0-board[x,y],x,y))
-	
+				
 	biggest = heapq.heappop(h)
-	if (biggest[1] == 0 or biggest[1] == 3) and (biggest[2] == 0 or biggest[2] == 3):
-		return 1
+	#True if the largest is in a top corner
+	#False if largest is in bottom corner
+	top = False
+	if biggest[1] == 0:
+		top = True
+	elif biggest[1] != 3:
+		return 0
+		
+	#true if largest is in a left corner
+	#false if largest is in a right corner
+	left = False
+	if biggest[2] == 0:
+		left = True
+	elif biggest[2] != 3:
+		return 0
 	
-	if inEndState(board):
-		return -2
-	return 0
+	#xOrY = {0,1}
+	#xOrY = 0: looking for next best along x axis
+	#xOrY = 1: looking for next best along y axis
+	xOrY = 0
+	#now holds the next biggest
+	biggest = heapq.heappop(h)
+	if top and left:
+		if biggest[1] == 1 and biggest[2] == 0:
+			xOrY = 0
+		elif biggest[1] == 0 and biggest[2] == 1:
+			xOrY = 1
+		#return 1 since there is still the biggest in a corner
+		else:
+			return 1
+	elif top and not left:
+		if biggest[1] == 2 and biggest[2] == 0:
+			xOrY = 0
+		elif biggest[1] == 3 and biggest[2] == 1:
+			xOrY = 1
+		#return 1 since there is still the biggest in a corner
+		else:
+			return 1
+	elif left:
+		if biggest[1] == 1 and biggest[2] == 3:
+			xOrY = 0
+		elif biggest[1] == 0 and biggest[2] == 2:
+			xOrY = 1
+		#return 1 since there is still the biggest in a corner
+		else:
+			return 1
+	else:
+		if biggest[1] == 2 and biggest[2] == 3:
+			xOrY = 0
+		elif biggest[1] == 3 and biggest[2] == 2:
+			xOrY = 1
+		#return 1 since there is still the biggest in a corner
+		else:
+			return 1
+	
+	return 2
+	
+	nextPos = [0,0]
+	for i in range(1,4):
+		#now holds the next biggest
+		biggest = heapq.heappop(h)
+		
+			
+	
+	return 1
 
 #pass in a board, a number of remaining maxNode levels to check 
 #whether it is a max node (maxNode==True) or expecti node (maxNode==False)
@@ -274,7 +343,7 @@ def genius(board):
 	
 	#SET MAXDEPTH HERE
 	#this needs to be changed
-	maxDepth = 2
+	maxDepth = 1
 	if numUnf > 12:
 		maxDepth = 1
 	elif numUnf > 9:
