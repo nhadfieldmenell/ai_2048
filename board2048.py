@@ -199,9 +199,21 @@ def addSpecificTile(theBoard,val,x,y):
 
 
 def heuristic(board):
+	#push negative values to maintain 
+	#stores 3 tuples [-value,x,y]
+	h = []
+	for x in range(4):
+		for y in range(4):
+			if board[x,y] != 0:
+				heapq.heappush(h,(0-board[x,y],x,y))
+	
+	biggest = heapq.heappop(h)
+	if (biggest[1] == 0 or biggest[1] == 3) and (biggest[2] == 0 or biggest[2] == 3):
+		return 1
+	
 	if inEndState(board):
-		return 0
-	return 1
+		return -2
+	return 0
 
 #pass in a board, a number of remaining maxNode levels to check 
 #whether it is a max node (maxNode==True) or expecti node (maxNode==False)
@@ -262,15 +274,15 @@ def genius(board):
 	
 	#SET MAXDEPTH HERE
 	#this needs to be changed
-	maxDepth = 4
+	maxDepth = 2
 	if numUnf > 12:
 		maxDepth = 1
 	elif numUnf > 9:
-		maxDepth = maxDepth/3
+		maxDepth = 1
 	elif numUnf > 6:
-		maxDepth = maxDepth/3
-	elif numUnf > 3:
-		maxDepth = 2*maxDepth/3
+		maxDepth = 1
+	elif numUnf > 2:
+		maxDepth = 1
 	
 	best = 0
 	bestDir = 1
