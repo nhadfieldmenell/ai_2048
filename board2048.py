@@ -26,9 +26,9 @@ sys.setrecursionlimit(100000)
 #return False if there is no possible move
 #otherwise, return True
 def inEndState(theBoard):
-	for row in theBoard:
-		for spot in row:
-			if spot == 0:
+	for x in range(4):
+		for y in range(4):
+			if theBoard[x,y] == 0:
 				return False
 	
 	#means all spaces are full
@@ -183,9 +183,25 @@ def moveDown(theBoard):
 	return changes
 
 	
+#return a list of coordinate spaces that have a 0 tile
+def unfilledSpots(board):
+	unfilled = []
+	for x in range(4):
+		for y in range(4):
+			if board[x,y] == 0:
+				unfilled.append([x,y])
+	return unfilled
+
+	
+#add a tile of value val to theBoard at (x,y)
 def addSpecificTile(theBoard,val,x,y):
 	theBoard[x,y] = val
 
+
+def heuristic(board):
+	if inEndState(board):
+		return 0
+	return 1
 
 #pass in a board, a number of remaining maxNode levels to check 
 #whether it is a max node (maxNode==True) or expecti node (maxNode==False)
@@ -197,22 +213,91 @@ def expectimax(board,maxDepth,maxNode):
 	if inEndState(board) or (maxDepth == 0 and not maxNode):
 		return heuristic(board)
 	
+	#handle maxNode
 	if maxNode:
 		for i in range(4):
 			newBoard = np.copy(board)
-		return max(expectimax(moveLeft(board),maxDepth-1,True),expectimax(moveRight(board),maxDepth-1,True),expectimax(moveUp(board),maxDepth-1,True),expectimax(moveDown(board),maxDepth-1,True))
+			moveLeft(newBoard)
+			left = expectimax(newBoard,maxDepth-1,False)
+			newBoard = np.copy(board)
+			moveRight(newBoard)
+			right = expectimax(newBoard,maxDepth-1,False)
+			newBoard = np.copy(board)
+			moveUp(newBoard)
+			up = expectimax(newBoard,maxDepth-1,False)
+			newBoard = np.copy(board)
+			moveDown(newBoard)
+			down = expectimax(newBoard,maxDepth-1,False)
+		return max(left,right,up,down)
 	
-	#value for an expectiNode: average of the value for each of its potential child nodes
-	value = 0
+	#handle expectiNode
+	
 	#holds all unfilled board points, stored as x,y pairs
-	unfilled = []
-	for x in range(4):
-		for y in range(4):
-			if board[x,y] == 0:
-				unfilled.append([x,y])
+	unfilled = unfilledSpots(board)
+	numUnfilled = float(len(unfilled))
 	
-	if len(unfilled) == 0:
-		return expectimax()
+	#if no new tiles can be added, score of expectiNode is that of identical maxNode
+	if numUnfilled == 0:
+		return expectimax(board,maxDepth,maxNode)
+	
+	#weighted average score of expectiNode
+	#weighted such that boards where 2's get placed have 9x more weight than boards that placed 4's
+	val = 0
+	weight = 1/numUnfilled
+	for coord in unfilled:
+		newBoard = np.copy(board)
+		addSpecificTile(newBoard,2,coord[0],coord[1])
+		val += 0.9*expectimax(newBoard,maxDepth,True)
+		newBoard = np.copy(board)
+		addSpecificTile(newBoard,4,coord[0],coord[1])
+		val += 0.1*expectimax(newBoard,maxDepth,True)
+		
+	return val
+
+
+#returns best direction to move the board
+def genius(board):
+	unfilled = unfilledSpots(board)
+	numUnf = len(unfilled)
+	
+	#SET MAXDEPTH HERE
+	#this needs to be changed
+	maxDepth = 4
+	if numUnf > 12:
+		maxDepth = 1
+	elif numUnf > 9:
+		maxDepth = maxDepth/3
+	elif numUnf > 6:
+		maxDepth = maxDepth/3
+	elif numUnf > 3:
+		maxDepth = 2*maxDepth/3
+	
+	best = 0
+	bestDir = 1
+	for moveDir in range(1,5):
+		newBoard = np.copy(board)
+		if moveDir == 1:
+			moveUp(newBoard)
+		elif moveDir == 2:
+			moveRight(newBoard)
+		elif moveDir == 3:
+			moveDown(newBoard)
+		elif moveDir == 4:
+			moveLeft(newBoard)
+					
+		val = expectimax(newBoard,maxDepth,False)
+		if val > best and not(newBoard==board).all():
+			best = val
+			bestDir = moveDir
+			
+	if bestDir == 1:
+		return moveUp(board)
+	elif bestDir == 2:
+		return moveRight(board)
+	elif bestDir == 3:
+		return moveDown(board)
+	else:
+		return moveLeft(board)
 
 """
 
@@ -630,6 +715,40 @@ def heuristicTest(board,count):
 
 """	
 
+def heuristicTest(theBoard,count):
+	#show board
+	for y in range(4):
+		print ("+-----+-----+-----+-----+\n|", end = "")
+		for x in range(4):
+			if theBoard[x,y] == 0:
+				print ("     |", end = "")
+			elif theBoard[x,y] < 10:
+				print(" ", end = " ")
+				print(theBoard[x,y], end = "  |")
+			elif theBoard[x,y] < 100:
+				print (" ", end = "")
+				print(theBoard[x,y], end = "  |")
+			elif theBoard[x,y] < 1000:
+				print (" ", end = "")
+				print(theBoard[x,y], end = " |")
+			elif theBoard[x,y] < 10000:
+				print (" ", end = "")
+				print(theBoard[x,y], end = "|")
+			elif theBoard[x,y] < 100000:
+				print(theBoard[x,y], end = "|")
+		print ("\n", end = "")
+	print ("+-----+-----+-----+-----+")
+	
+	if inEndState(theBoard):
+		print("        Game Over")
+		return
+		
+	change = genius(theBoard)
+	if change != 0:
+		addRandomTile(theBoard)
+	heuristicTest(theBoard,count+1)
+	return
+
 def newTurn(theBoard):
 	
 	#show board
@@ -668,8 +787,8 @@ def newTurn(theBoard):
 		change = moveUp(theBoard)
 	elif userInput == "s":
 		change = moveDown(theBoard)
-	#elif userInput == "g":
-	#	change = genius(theBoard,0,0,0)
+	elif userInput == "g":
+		change = genius(theBoard)
 	elif userInput == "q":
 		return
 	if change != 0:
@@ -680,11 +799,10 @@ def newTurn(theBoard):
 
 aBoard = [[0 for x in range(4)] for x in range(4)]
 theBoard = np.array(aBoard)
-print (theBoard)
 addRandomTile(theBoard)
 addRandomTile(theBoard)
-#heuristicTest(aBoard,0)
-newTurn(theBoard)
+heuristicTest(theBoard,0)
+#newTurn(theBoard)
 
 ''''
 input_var = raw_input("Enter something:")
