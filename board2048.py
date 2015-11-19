@@ -294,6 +294,8 @@ def expectimax(board,maxDepth,maxNode):
 	if inEndState(board) or (maxDepth == 0 and not maxNode):
 		return heuristic(board)
 	
+	
+	
 	#handle maxNode
 	if maxNode:
 		for i in range(4):
@@ -859,7 +861,8 @@ def newTurn(theBoard):
 	if inEndState(theBoard):
 		print("        Game Over")
 		return
-	userInput = raw_input('Pick a move (a, w, s, d, g for genius, q for quit): ')
+	#userInput = raw_input('Pick a move (a, w, s, d, g for genius, q for quit): ')
+	userInput = raw_input('Pick a move (a, w, s, d, q for quit): ')
 	if userInput == "a":
 		change = moveLeft(theBoard)
 	elif userInput == "d":
@@ -882,8 +885,8 @@ aBoard = [[0 for x in range(4)] for x in range(4)]
 theBoard = np.array(aBoard)
 addRandomTile(theBoard)
 addRandomTile(theBoard)
-heuristicTest(theBoard,0)
-#newTurn(theBoard)
+#heuristicTest(theBoard,0)
+newTurn(theBoard)
 
 ''''
 input_var = raw_input("Enter something:")
