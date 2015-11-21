@@ -339,6 +339,8 @@ def expectimax(board,maxDepth,maxNode):
 
 
 #returns best direction to move the board
+#going to change this to use Dynamic Programming, rather than recursive calls
+#going to use hash table to hold the score of particular board positions to improve performance
 def genius(board):
 	unfilled = unfilledSpots(board)
 	numUnf = len(unfilled)
