@@ -202,7 +202,7 @@ def addSpecificTile(theBoard,val,x,y):
 #first checks if it is an end state (want to avoid)
 #then it sees if the largest is in a corner
 #then it sees for how many in a row down one edge are the values descending
-#only next-largest is considered so if 3rd largest is nex to the largest
+#only next-largest is considered so if 3rd largest is next to the largest
 #   that only counts for the largest being in the corner
 #return the # of biggest->next biggest->next biggest there is starting from one corner and going along some edge
 def heuristic(board):
@@ -218,6 +218,11 @@ def heuristic(board):
 				heapq.heappush(h,(0-board[x,y],x,y))
 				
 	biggest = heapq.heappop(h)
+
+	#This is the case where there is a single tile on the board
+	if (len(h) == 0):
+		return 2
+
 	#True if the largest is in a top corner
 	#False if largest is in bottom corner
 	top = False
@@ -321,7 +326,7 @@ def expectimax(board,maxDepth,maxNode):
 	
 	#if no new tiles can be added, score of expectiNode is that of identical maxNode
 	if numUnfilled == 0:
-		return expectimax(board,maxDepth,maxNode)
+		return expectimax(board,maxDepth,True)
 	
 	#weighted average score of expectiNode
 	#weighted such that boards where 2's get placed have 9x more weight than boards that placed 4's
@@ -347,7 +352,7 @@ def genius(board):
 	
 	#SET MAXDEPTH HERE
 	#this needs to be changed
-	maxDepth = 1
+	maxDepth = 2
 	if numUnf > 12:
 		maxDepth = 1
 	elif numUnf > 9:
@@ -357,7 +362,8 @@ def genius(board):
 	elif numUnf > 2:
 		maxDepth = 1
 	
-	best = 0
+	#don't like this much
+	best = -10000
 	bestDir = 1
 	for moveDir in range(1,5):
 		newBoard = np.copy(board)
@@ -369,8 +375,11 @@ def genius(board):
 			moveDown(newBoard)
 		elif moveDir == 4:
 			moveLeft(newBoard)
-					
+
+
+		#print ("lala")			
 		val = expectimax(newBoard,maxDepth,False)
+		#print ("val: " + str(val)) 
 		if val > best and not(newBoard==board).all():
 			best = val
 			bestDir = moveDir
@@ -384,421 +393,7 @@ def genius(board):
 	else:
 		return moveLeft(board)
 
-"""
 
-def maxTile(board):
-	max = 0
-	for i in range(16):
-		if board[i] > max:
-			max = board[i]
-	return max
-def snakeFavor(board,listHeap,corner,dir):
-	print("ding")
-	favor = 0
-	if corner == 1:
-		if dir == 4:
-			for y in range(2,-1,-1): 
-				if board[y] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(4):
-				if board[4+y] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(3,-1,-1):
-				if board(8+y) == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(4):
-				if board(12+y) == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			return favor
-		elif dir == 3:
-			for x in range(1,4):
-				if board[4*x+3] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(3,-1,-1):
-				if board[4*x+2] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(4):
-				if board[4*x+1] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(3,-1,-1):
-				if board[4*x] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			return favor
-			
-	elif corner == 2:
-		if dir == 2:
-			for y in range(1,4): 
-				if board[y] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(3,-1,-1):
-				if board[4+y] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(4):
-				if board(8+y) == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(3,-1,-1):
-				if board(12+y) == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			return favor
-		elif dir == 3:
-			for x in range(1,4):
-				if board[4*x] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(3,-1,-1):
-				if board[4*x+1] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(4):
-				if board[4*x+2] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(3,-1,-1):
-				if board[4*x+3] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			return favor
-			
-	elif corner == 3:
-		if dir == 2:
-			for y in range(1,4): 
-				if board[12+y] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(3,-1,-1):
-				if board[8+y] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(4):
-				if board(4+y) == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(3,-1,-1):
-				if board(y) == listHeap.pop():
-					favor += 10
-				else:
-					return favor
-			return favor
-		elif dir == 1:
-			for x in range(2,-1,-1):
-				if board[4*x] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(4):
-				if board[4*x+1] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(3,-1,-1):
-				if board[4*x+2] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(4):
-				if board[4*x+3] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			return favor
-			
-	elif corner == 4:
-		if dir == 4:
-			for y in range(2,-1,-1): 
-				if board[y+12] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(4):
-				if board[8+y] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(3,-1,-1):
-				if board(4+y) == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for y in range(4):
-				if board(y) == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			return favor
-		elif dir == 1:
-			for x in range(2,-1,-1):
-				if board[4*x+3] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(4):
-				if board[4*x+2] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(3,-1,-1):
-				if board[4*x+1] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			for x in range(4):
-				if board[4*x] == listHeap.pop():
-					favor += 10
-				else:
-					 return favor
-			return favor
-	return favor
-
-def heuristic(board):
-	favorability = 0
-	highest = max(board)
-	highestIndexes = []
-	for i in range(16):
-		if board[i] == highest:
-			highestIndexes.append(i)
-	corner = 0
-	if highestIndexes.count(3):
-		corner = 1
-	elif highestIndexes.count(0):
-		corner = 2
-	elif highestIndexes.count(12):
-		corner = 3
-	elif highestIndexes.count(15):
-		corner = 4
-		
-	if corner != 0:
-		favorability += 10
-		
-	minHeap = []
-	for x in range(16):
-		heapq.heappush(minHeap,board[x])
-		
-	listHeap = []
-	
-	for x in range(16):
-		listHeap.append(heapq.heappop(minHeap))
-	
-	listHeap.pop()
-	
-	if corner == 1:
-		favorability += max(snakeFavor(board,listHeap,1,4),snakeFavor(board,listHeap,1,3))
-		
-	elif corner == 2:
-		favorability += max(snakeFavor(board,listHeap,2,2),snakeFavor(board,listHeap,2,3))
-		
-	elif corner == 3:
-		favorability += max(snakeFavor(board,listHeap,3,1),snakeFavor(board,listHeap,3,2))
-		
-	elif corner == 4:
-		favorability += max(snakeFavor(board,listHeap,4,1),snakeFavor(board,listHeap,4,4))
-		
-		
-		'''
-	nextHighest = listHeap.pop()
-	
-			
-	if corner == 1:
-		if board[2] == nextHighest:
-			corner = 14
-			if board[7] == nextHighest:
-				corner = 143
-		elif board[7] == nextHighest:
-			corner = 13
-			
-	elif corner == 2:
-		if board[1] == nextHighest:
-			corner = 22
-			if board[4] == nextHighest:
-				corner = 223
-		elif board[4] == nextHighest:
-			corner = 23
-			
-	elif corner == 3:
-		if board[8] == nextHighest:
-			corner = 31
-			if board[13] == nextHighest:
-				corner = 312
-		elif board[13] == nextHighest:
-			corner = 32
-			
-	elif corner == 4:
-		if board[1] == nextHighest:
-			corner = 41
-			if board[14] == nextHighest:
-				corner = 414
-		elif board[14] == nextHighest:
-			corner = 44
-			
-	if corner > 10:
-		favorability += 20
-		
-	wouldAdd = 40
-	
-	return favorability
-
-def genius(theBoard,turn,dir,maxWhenCalled):
-	if turn != 0:
-		if maxWhenCalled < 50 and turn == 3:
-			return 0
-		elif maxWhenCalled < 150 and turn == 3:
-			return 0
-		elif maxWhenCalled < 550 and turn == 4:
-			return 0
-		elif maxWhenCalled < 2500 and turn == 4:
-			return 0
-		elif maxWhenCalled >= 2500 and turn == 4:
-			return 0
-		
-	favorability = 0
-	
-	#optimization because first 2 turns don't matter
-	if turn != 0 and turn != 1:
-		favorability += heuristic(theBoard)	
-		
-	newBoard = []
-	
-	#duplicate the old board
-	for i in range(16):
-		newBoard.append(theBoard[i])
-		
-	if dir == 1:
-		moveUp(newBoard)
-	elif dir == 2:
-		moveRight(newBoard)
-	elif dir == 3:
-		moveDown(newBoard)
-	elif dir == 4:
-		moveLeft(newBoard)
-		
-	emptyCount = 0
-	emptySpots = []
-	for x in range(4):
-		for y in range(4):
-			loc = [x,y]
-			if newBoard[loc] == 0:
-				emptySpots.append(loc)
-	
-	nextFavorability = 0	
-	threadCount = 1
-	newBoard4 = []
-	for i in range(16):
-		newBoard4.append(newBoard[i])
-	
-	if turn != 0:		
-		turn += 1		
-		for i in emptySpots:
-			for x in range(1,5):
-				threadCount += 1
-				addSpecificTile(newBoard,2,i)
-				addSpecificTile(newBoard4,4,i)
-				nextFavorability += .1*genius(newBoard4, turn, x,maxWhenCalled)
-				nextFavorability += .9*genius(newBoard, turn, x,maxWhenCalled)
-			
-	nextFavorability = nextFavorability / threadCount
-	
-	change = 0
-	
-	if turn == 0:
-		theMax = max(theBoard)
-		up = genius(theBoard,1,1,theMax)
-		right = genius(theBoard,1,2,theMax)
-		down = genius(theBoard,1,3,theMax)
-		left = genius(theBoard,1,4,theMax)
-		if max(up,right,down,left) == up:
-			change = moveUp(theBoard)
-		if max(right,down,left) == right and change == 0:
-			change = moveRight(theBoard)
-		if max(down,left) == down and change == 0:
-			change = moveDown(theBoard)
-		if change == 0:
-			change = moveLeft(theBoard)
-			if change == 0 and max(up,right,down) == up:
-				change = moveUp(theBoard)
-			if change == 0 and max(right,down) == right:
-				change = moveRight(theBoard)
-			if change == 0:
-				moveDown(theBoard)
-				if change == 0 and max(up,right) == up:
-					change = moveUp(theBoard)
-				if change == 0:
-					change = moveRight(theBoard)
-					if change == 0:
-						moveUp(theBoard)
-		
-	if turn == 0:
-		return change
-	
-	return favorability + nextFavorability
-
-
-
-
-def heuristicTest(board,count):
-	print(str(count))
-	#show board
-	for x in range(4):
-		print ("+-----+-----+-----+-----+\n|", end = "")
-		for y in range(4):
-			if board[x,y] == 0:
-				print ("     |", end = "")
-			elif board[x,y] < 10:
-				print(" ", end = " ")
-				print(board[x,y], end = "  |")
-			elif board[x,y] < 100:
-				print (" ", end = "")
-				print(board[x,y], end = "  |")
-			elif board[x,y] < 1000:
-				print (" ", end = "")
-				print(board[x,y], end = " |")
-			elif board[x,y] < 10000:
-				print (" ", end = "")
-				print(board[x,y], end = "|")
-			elif board[x,y] < 100000:
-				print(board[x,y], end = "|")
-		print ("\n", end = "")
-	print ("+-----+-----+-----+-----+")
-	if inEndState(board):
-		print ("Highest: " + str(max(board)))
-		return
-		
-	change = genius(board,0,0,0)	
-	if change != 0:
-		addRandomTile(board)
-	heuristicTest(board,count+1)
-	return
-
-"""	
 
 def heuristicTest(theBoard,count):
 	#show board
@@ -887,8 +482,8 @@ aBoard = [[0 for x in range(4)] for x in range(4)]
 theBoard = np.array(aBoard)
 addRandomTile(theBoard)
 addRandomTile(theBoard)
-#heuristicTest(theBoard,0)
-newTurn(theBoard)
+heuristicTest(theBoard,0)
+#newTurn(theBoard)
 
 ''''
 input_var = raw_input("Enter something:")
