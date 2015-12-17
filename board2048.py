@@ -5,6 +5,17 @@ import heapq
 import numpy as np
 sys.setrecursionlimit(100000)
 
+scoreEnd = 0
+
+#score when 0 in snaking pattern
+score0 = 3
+
+#score when 1 in snaking pattern
+score1 = 6
+score2 = 7
+score3 = 8
+score4 = 9
+
 #directions: 1 is up, 2 is right, 3 is down, 4 is left, 0 is nothing
 #corners correspond to quadrant
 
@@ -67,7 +78,6 @@ def addRandomTile(theBoard):
 		
 	theBoard[emptySpots[spotToFill][0],emptySpots[spotToFill][1]] = newTileNum
 
-
 def moveLeft(theBoard):
 	changes = 0
 	#holds the positions of the tiles that have already been condensed so you dont condense the same space twice
@@ -98,7 +108,6 @@ def moveLeft(theBoard):
 						break
 	return changes
 
-
 def moveUp(theBoard):
 	changes = 0
 	condensed = []
@@ -126,7 +135,6 @@ def moveUp(theBoard):
 						break	
 	return changes
 
-
 def moveRight(theBoard):
 	changes = 0
 	condensed = []
@@ -153,7 +161,6 @@ def moveRight(theBoard):
 						changes += 1
 						break	
 	return changes
-
 
 def moveDown(theBoard):
 	changes = 0
@@ -207,8 +214,125 @@ def addSpecificTile(theBoard,val,x,y):
 #return the # of biggest->next biggest->next biggest there is starting from one corner and going along some edge
 def heuristic(board):
 	if inEndState(board):
-		return -2
+		return scoreEnd
 	
+	h = []
+	for x in range(4):
+		for y in range(4):
+			if board[x,y] != 0:
+				heapq.heappush(h,(0-board[x,y]))
+
+	biggest = 0-heapq.heappop(h)
+
+	#This is the case where there is a single tile on the board
+	if (len(h) == 0):
+		return score1
+
+
+	#topLeft is true if the biggest one is in the top left corner, etc.
+	topLeft = False
+	topRight = False
+	botLeft = False
+	botRight = False
+	#True if the largest is in a top corner
+	#False if largest is in bottom corner
+	top = False
+	if board[0,0] == biggest:
+		topLeft = True
+	elif board[3,0] == biggest:
+		topRight = True
+	elif board[0,3] == biggest:
+		botLeft = True
+	elif board[3,3] == biggest:
+		botRight = True
+	else:
+		return score0
+
+	#xOrY = {0,1}
+	#xOrY = 0: looking for next best along x axis
+	#xOrY = 1: looking for next best along y axis
+	xOrY = 0
+
+	#1 if moving left->right or up->down, -1 otherwise
+	inc = 1
+
+	#now holds the second biggest
+	biggest = 0-heapq.heappop(h)
+
+	#holds the position of the previous spot in the snaking pattern
+	thisX = 0
+	thisY = 0
+
+	if topLeft:
+		if board[1,0] == biggest:
+			thisX = 1
+			thisY = 0
+			xOrY = 0
+		elif board[0,1] == biggest:
+			thisX = 0
+			thisY = 1
+			xOrY = 1
+		else:
+			return score1
+	elif topRight:
+		if board[2,0] == biggest:
+			thisX = 2
+			thisY = 0
+			xOrY = 0
+			inc = -1
+		elif board[3,1] == biggest:
+			thisX = 3
+			thisY = 1
+			xOrY = 1
+		else:
+			return score1
+	elif botLeft:
+		if board[1,3] == biggest:
+			thisX = 1
+			thisY = 3
+			xOrY = 0
+		elif board[0,2] == biggest:
+			thisX = 0
+			thisY = 2
+			xOrY = 1
+			inc = -1
+		else:
+			return score1
+	elif botRight:
+		if board[2,3] == biggest:
+			thisX = 2
+			thisY = 3
+			xOrY = 0
+			inc = -1
+		elif board[3,2] == biggest:
+			thisX = 3
+			thisY = 2
+			xOrY = 1
+			inc = -1
+		else:
+			return score1
+
+
+	for i in range(2):
+		if (len(h) == 0):
+			if i == 0:
+				return score2
+			else:
+				return score3
+		biggest = 0-heapq.heappop(h)
+		if not xOrY:
+			thisX += inc
+		else:
+			thisY += inc
+		if not board[thisX,thisY] != biggest:
+			if i == 0:
+				return score2
+			else:
+				return score3
+
+	return score4
+
+
 	#push negative values to maintain 
 	#stores 3 tuples [-value,x,y]
 	h = []
@@ -221,7 +345,7 @@ def heuristic(board):
 
 	#This is the case where there is a single tile on the board
 	if (len(h) == 0):
-		return 2
+		return score1
 
 	#True if the largest is in a top corner
 	#False if largest is in bottom corner
@@ -229,7 +353,7 @@ def heuristic(board):
 	if biggest[1] == 0:
 		top = True
 	elif biggest[1] != 3:
-		return 0
+		return score0
 		
 	#true if largest is in a left corner
 	#false if largest is in a right corner
@@ -237,12 +361,16 @@ def heuristic(board):
 	if biggest[2] == 0:
 		left = True
 	elif biggest[2] != 3:
-		return 0
+		return score0
 	
 	#xOrY = {0,1}
 	#xOrY = 0: looking for next best along x axis
 	#xOrY = 1: looking for next best along y axis
 	xOrY = 0
+
+	#1 if moving left->right or up->down, -1 otherwise
+	inc = 1
+
 	#now holds the next biggest
 	biggest = heapq.heappop(h)
 	if top and left:
@@ -252,44 +380,60 @@ def heuristic(board):
 			xOrY = 1
 		#return 1 since there is still the biggest in a corner
 		else:
-			return 1
+			return score1
 	elif top and not left:
 		if biggest[1] == 2 and biggest[2] == 0:
 			xOrY = 0
+			inc = -1
 		elif biggest[1] == 3 and biggest[2] == 1:
 			xOrY = 1
 		#return 1 since there is still the biggest in a corner
 		else:
-			return 1
+			return score1
 	elif left:
 		if biggest[1] == 1 and biggest[2] == 3:
 			xOrY = 0
 		elif biggest[1] == 0 and biggest[2] == 2:
 			xOrY = 1
+			inc = -1
 		#return 1 since there is still the biggest in a corner
 		else:
-			return 1
+			return score1
 	else:
 		if biggest[1] == 2 and biggest[2] == 3:
 			xOrY = 0
+			inc = -1
 		elif biggest[1] == 3 and biggest[2] == 2:
 			xOrY = 1
+			inc = -1
 		#return 1 since there is still the biggest in a corner
 		else:
-			return 1
-	
-	return 2
-	
-	nextPos = [0,0]
-	for i in range(1,4):
-		#now holds the next biggest
-		biggest = heapq.heappop(h)
-		
-			
-	
-	return 1
+			return score1
 
-#pass in a board, a number of remaining maxNode levels to check 
+
+	for i in range(2):
+		if (len(h) == 0):
+			if i == 0:
+				return score2
+			else:
+				return score3
+		thisX = biggest[1]
+		thisY = biggest[2]
+		biggest = heapq.heappop(h)
+		if not xOrY:
+			thisX += inc
+		else:
+			thisY += inc
+		if not (thisX == biggest[1] and thisY == biggest[2]):
+			if i == 0:
+				return score2
+			else:
+				return score3
+
+	return score4
+	
+
+#pass in a board, a number of remaining maxNode levels to check, 
 #whether it is a max node (maxNode==True) or expecti node (maxNode==False)
 #return the value of the state given that many steps left
 #maxNodes decide between best moves for a board position
@@ -331,7 +475,7 @@ def expectimax(board,maxDepth,maxNode):
 	#weighted average score of expectiNode
 	#weighted such that boards where 2's get placed have 9x more weight than boards that placed 4's
 	val = 0
-	weight = 1/numUnfilled
+	weight = float(1/numUnfilled)
 	for coord in unfilled:
 		newBoard = np.copy(board)
 		addSpecificTile(newBoard,2,coord[0],coord[1])
@@ -340,7 +484,7 @@ def expectimax(board,maxDepth,maxNode):
 		addSpecificTile(newBoard,4,coord[0],coord[1])
 		val += 0.1*expectimax(newBoard,maxDepth,True)
 		
-	return val
+	return val*weight
 
 
 #returns best direction to move the board
@@ -360,7 +504,7 @@ def genius(board):
 	elif numUnf > 6:
 		maxDepth = 1
 	elif numUnf > 2:
-		maxDepth = 1
+		maxDepth = 2
 	
 	#don't like this much
 	best = -10000
@@ -376,10 +520,8 @@ def genius(board):
 		elif moveDir == 4:
 			moveLeft(newBoard)
 
-
-		#print ("lala")			
+			
 		val = expectimax(newBoard,maxDepth,False)
-		#print ("val: " + str(val)) 
 		if val > best and not(newBoard==board).all():
 			best = val
 			bestDir = moveDir
@@ -393,6 +535,27 @@ def genius(board):
 	else:
 		return moveLeft(board)
 
+
+def evaluateHeuristic():
+	testBoard = [[0 for x in range(4)] for x in range(4)]
+	testBoard = np.array(testBoard)
+	testBoard[0,0] = 64
+	testBoard[0,1] = 4
+	testBoard[0,2] = 2
+	testBoard[0,3] = 4
+	testBoard[1,0] = 128
+	testBoard[1,1] = 0
+	testBoard[1,2] = 0
+	testBoard[1,3] = 0
+	testBoard[2,0] = 128
+	testBoard[2,1] = 0
+	testBoard[2,2] = 0
+	testBoard[2,3] = 0
+	testBoard[3,0] = 256
+	testBoard[3,1] = 0
+	testBoard[3,2] = 0
+	testBoard[3,3] = 0
+	print(heuristic(testBoard))
 
 
 def heuristicTest(theBoard,count):
@@ -482,7 +645,9 @@ aBoard = [[0 for x in range(4)] for x in range(4)]
 theBoard = np.array(aBoard)
 addRandomTile(theBoard)
 addRandomTile(theBoard)
-heuristicTest(theBoard,0)
+
+evaluateHeuristic()
+#heuristicTest(theBoard,0)
 #newTurn(theBoard)
 
 ''''

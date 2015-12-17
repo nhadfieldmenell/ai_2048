@@ -413,3 +413,106 @@ def heuristicTest(board,count):
 	return
 
 """
+
+
+
+
+
+#push negative values to maintain 
+	#stores 3 tuples [-value,x,y]
+	h = []
+	for x in range(4):
+		for y in range(4):
+			if board[x,y] != 0:
+				heapq.heappush(h,(0-board[x,y],x,y))
+				
+	biggest = heapq.heappop(h)
+
+	#This is the case where there is a single tile on the board
+	if (len(h) == 0):
+		return score1
+
+	#True if the largest is in a top corner
+	#False if largest is in bottom corner
+	top = False
+	if biggest[1] == 0:
+		top = True
+	elif biggest[1] != 3:
+		return score0
+		
+	#true if largest is in a left corner
+	#false if largest is in a right corner
+	left = False
+	if biggest[2] == 0:
+		left = True
+	elif biggest[2] != 3:
+		return score0
+	
+	#xOrY = {0,1}
+	#xOrY = 0: looking for next best along x axis
+	#xOrY = 1: looking for next best along y axis
+	xOrY = 0
+
+	#1 if moving left->right or up->down, -1 otherwise
+	inc = 1
+
+	#now holds the next biggest
+	biggest = heapq.heappop(h)
+	if top and left:
+		if biggest[1] == 1 and biggest[2] == 0:
+			xOrY = 0
+		elif biggest[1] == 0 and biggest[2] == 1:
+			xOrY = 1
+		#return 1 since there is still the biggest in a corner
+		else:
+			return score1
+	elif top and not left:
+		if biggest[1] == 2 and biggest[2] == 0:
+			xOrY = 0
+			inc = -1
+		elif biggest[1] == 3 and biggest[2] == 1:
+			xOrY = 1
+		#return 1 since there is still the biggest in a corner
+		else:
+			return score1
+	elif left:
+		if biggest[1] == 1 and biggest[2] == 3:
+			xOrY = 0
+		elif biggest[1] == 0 and biggest[2] == 2:
+			xOrY = 1
+			inc = -1
+		#return 1 since there is still the biggest in a corner
+		else:
+			return score1
+	else:
+		if biggest[1] == 2 and biggest[2] == 3:
+			xOrY = 0
+			inc = -1
+		elif biggest[1] == 3 and biggest[2] == 2:
+			xOrY = 1
+			inc = -1
+		#return 1 since there is still the biggest in a corner
+		else:
+			return score1
+
+
+	for i in range(2):
+		if (len(h) == 0):
+			if i == 0:
+				return score2
+			else:
+				return score3
+		thisX = biggest[1]
+		thisY = biggest[2]
+		biggest = heapq.heappop(h)
+		if not xOrY:
+			thisX += inc
+		else:
+			thisY += inc
+		if not (thisX == biggest[1] and thisY == biggest[2]):
+			if i == 0:
+				return score2
+			else:
+				return score3
+
+	return score4
