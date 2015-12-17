@@ -15,6 +15,10 @@ score1 = 6
 score2 = 7
 score3 = 8
 score4 = 9
+score5 = 10
+score6 = 11
+score7 = 12
+score8 = 13
 
 #directions: 1 is up, 2 is right, 3 is down, 4 is left, 0 is nothing
 #corners correspond to quadrant
@@ -312,7 +316,6 @@ def heuristic(board):
 		else:
 			return score1
 
-
 	for i in range(2):
 		if (len(h) == 0):
 			if i == 0:
@@ -324,113 +327,57 @@ def heuristic(board):
 			thisX += inc
 		else:
 			thisY += inc
-		if not board[thisX,thisY] != biggest:
+		if board[thisX,thisY] != biggest:
 			if i == 0:
 				return score2
 			else:
 				return score3
 
-	return score4
+	#return score4
+	#stuff below here may just make it slower
+	inc = -inc
 
-
-	#push negative values to maintain 
-	#stores 3 tuples [-value,x,y]
-	h = []
-	for x in range(4):
-		for y in range(4):
-			if board[x,y] != 0:
-				heapq.heappush(h,(0-board[x,y],x,y))
-				
-	biggest = heapq.heappop(h)
-
-	#This is the case where there is a single tile on the board
-	if (len(h) == 0):
-		return score1
-
-	#True if the largest is in a top corner
-	#False if largest is in bottom corner
-	top = False
-	if biggest[1] == 0:
-		top = True
-	elif biggest[1] != 3:
-		return score0
-		
-	#true if largest is in a left corner
-	#false if largest is in a right corner
-	left = False
-	if biggest[2] == 0:
-		left = True
-	elif biggest[2] != 3:
-		return score0
-	
-	#xOrY = {0,1}
-	#xOrY = 0: looking for next best along x axis
-	#xOrY = 1: looking for next best along y axis
-	xOrY = 0
-
-	#1 if moving left->right or up->down, -1 otherwise
-	inc = 1
-
-	#now holds the next biggest
-	biggest = heapq.heappop(h)
-	if top and left:
-		if biggest[1] == 1 and biggest[2] == 0:
-			xOrY = 0
-		elif biggest[1] == 0 and biggest[2] == 1:
-			xOrY = 1
-		#return 1 since there is still the biggest in a corner
+	if not xOrY:
+		if topLeft or topRight:
+			thisY = 1
 		else:
-			return score1
-	elif top and not left:
-		if biggest[1] == 2 and biggest[2] == 0:
-			xOrY = 0
-			inc = -1
-		elif biggest[1] == 3 and biggest[2] == 1:
-			xOrY = 1
-		#return 1 since there is still the biggest in a corner
-		else:
-			return score1
-	elif left:
-		if biggest[1] == 1 and biggest[2] == 3:
-			xOrY = 0
-		elif biggest[1] == 0 and biggest[2] == 2:
-			xOrY = 1
-			inc = -1
-		#return 1 since there is still the biggest in a corner
-		else:
-			return score1
+			thisY = 2
 	else:
-		if biggest[1] == 2 and biggest[2] == 3:
-			xOrY = 0
-			inc = -1
-		elif biggest[1] == 3 and biggest[2] == 2:
-			xOrY = 1
-			inc = -1
-		#return 1 since there is still the biggest in a corner
+		if topLeft or botLeft:
+			thisX = 1
 		else:
-			return score1
+			thisX = 2
 
 
-	for i in range(2):
+	for i in range(4):
 		if (len(h) == 0):
 			if i == 0:
-				return score2
+				return score4
+			elif i == 1:
+				return score5
+			elif i == 2:
+				return score6
 			else:
-				return score3
-		thisX = biggest[1]
-		thisY = biggest[2]
-		biggest = heapq.heappop(h)
+				return score7
+		biggest = 0-heapq.heappop(h)
+		if board[thisX,thisY] != biggest:
+			if i == 0:
+				return score4
+			elif i == 1:
+				return score5
+			elif i == 2:
+				return score6
+			else:
+				return score7
 		if not xOrY:
 			thisX += inc
 		else:
 			thisY += inc
-		if not (thisX == biggest[1] and thisY == biggest[2]):
-			if i == 0:
-				return score2
-			else:
-				return score3
 
-	return score4
+	return score8
+
+
+	
 	
 
 #pass in a board, a number of remaining maxNode levels to check, 
@@ -501,10 +448,10 @@ def genius(board):
 		maxDepth = 1
 	elif numUnf > 9:
 		maxDepth = 1
-	elif numUnf > 6:
+	elif numUnf > 5:
 		maxDepth = 1
 	elif numUnf > 2:
-		maxDepth = 2
+		maxDepth = 1
 	
 	#don't like this much
 	best = -10000
@@ -535,26 +482,26 @@ def genius(board):
 	else:
 		return moveLeft(board)
 
-
+#this method allows you to test the heuristic on an input board
 def evaluateHeuristic():
 	testBoard = [[0 for x in range(4)] for x in range(4)]
 	testBoard = np.array(testBoard)
-	testBoard[0,0] = 64
-	testBoard[0,1] = 4
-	testBoard[0,2] = 2
-	testBoard[0,3] = 4
-	testBoard[1,0] = 128
-	testBoard[1,1] = 0
-	testBoard[1,2] = 0
-	testBoard[1,3] = 0
-	testBoard[2,0] = 128
+	testBoard[0,0] = 11
+	testBoard[0,1] = 11
+	testBoard[0,2] = 116
+	testBoard[0,3] = 117
+	testBoard[1,0] = 11
+	testBoard[1,1] = 11
+	testBoard[1,2] = 115
+	testBoard[1,3] = 118
+	testBoard[2,0] = 10
 	testBoard[2,1] = 0
 	testBoard[2,2] = 0
-	testBoard[2,3] = 0
-	testBoard[3,0] = 256
+	testBoard[2,3] = 119
+	testBoard[3,0] = 6
 	testBoard[3,1] = 0
 	testBoard[3,2] = 0
-	testBoard[3,3] = 0
+	testBoard[3,3] = 200
 	print(heuristic(testBoard))
 
 
