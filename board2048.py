@@ -3,7 +3,6 @@ import sys
 import random
 import heapq
 import numpy as np
-sys.setrecursionlimit(100000)
 
 scoreEnd = 0
 
@@ -36,6 +35,7 @@ score8 = 13
 	+---+---+---+---+
 
 """
+
 
 #board is in end state if there is no free tile and no adjacent matching tiles
 #return False if there is no possible move
@@ -193,6 +193,16 @@ def moveDown(theBoard):
 						break
 	return changes
 
+def moveDir(theBoard,dir):
+	#print ("dir: " + dir)
+	if dir == 'U':
+		return moveUp(theBoard)
+	if dir == 'D':
+		return moveDown(theBoard)
+	if dir == 'L':
+		return moveLeft(theBoard)
+	if dir == 'R':
+		return moveRight(theBoard)
 	
 #return a list of coordinate spaces that have a 0 tile
 def unfilledSpots(board):
@@ -209,6 +219,32 @@ def addSpecificTile(theBoard,val,x,y):
 	theBoard[x,y] = val
 
 
+_hcache = {}
+
+#@profile
+def trivialHeuristic(board):
+	key = tuple(board.flatten())
+	if key in _hcache:
+		return _hcache[key]
+
+	returnScore = -1
+
+	if inEndState(board):
+		returnScore = 0
+		_hcache[key] = returnScore
+		return returnScore
+
+	maxI = np.argmax(board)
+
+	if maxI in [0,3,12,15]:
+		returnScore = 2
+	else:
+		returnScore = 1
+
+	_hcache[key] = returnScore
+	return returnScore
+
+
 #the heuristic measures how good a state is
 #first checks if it is an end state (want to avoid)
 #then it sees if the largest is in a corner
@@ -216,15 +252,27 @@ def addSpecificTile(theBoard,val,x,y):
 #only next-largest is considered so if 3rd largest is next to the largest
 #   that only counts for the largest being in the corner
 #return the # of biggest->next biggest->next biggest there is starting from one corner and going along some edge
+@profile
 def heuristic(board):
+	key = tuple(board.flatten())
+	if key in _hcache:
+		return _hcache[key]
+
+	returnScore = -1
+
 	if inEndState(board):
+		_hcache[key] = scoreEnd
 		return scoreEnd
-	
+
+
+
 	h = []
 	for x in range(4):
 		for y in range(4):
 			if board[x,y] != 0:
 				heapq.heappush(h,(0-board[x,y]))
+
+	median = h[len(h)/2]
 
 	biggest = 0-heapq.heappop(h)
 
@@ -240,7 +288,6 @@ def heuristic(board):
 	botRight = False
 	#True if the largest is in a top corner
 	#False if largest is in bottom corner
-	top = False
 	if board[0,0] == biggest:
 		topLeft = True
 	elif board[3,0] == biggest:
@@ -250,6 +297,7 @@ def heuristic(board):
 	elif board[3,3] == biggest:
 		botRight = True
 	else:
+		_hcache[key] = score0
 		return score0
 
 	#xOrY = {0,1}
@@ -277,6 +325,7 @@ def heuristic(board):
 			thisY = 1
 			xOrY = 1
 		else:
+			_hcache[key] = score1
 			return score1
 	elif topRight:
 		if board[2,0] == biggest:
@@ -289,6 +338,7 @@ def heuristic(board):
 			thisY = 1
 			xOrY = 1
 		else:
+			_hcache[key] = score1
 			return score1
 	elif botLeft:
 		if board[1,3] == biggest:
@@ -301,6 +351,7 @@ def heuristic(board):
 			xOrY = 1
 			inc = -1
 		else:
+			_hcache[key] = score1
 			return score1
 	elif botRight:
 		if board[2,3] == biggest:
@@ -314,13 +365,16 @@ def heuristic(board):
 			xOrY = 1
 			inc = -1
 		else:
+			_hcache[key] = score1
 			return score1
 
 	for i in range(2):
 		if (len(h) == 0):
 			if i == 0:
+				_hcache[key] = score2
 				return score2
 			else:
+				_hcache[key] = score3
 				return score3
 		biggest = 0-heapq.heappop(h)
 		if not xOrY:
@@ -329,8 +383,10 @@ def heuristic(board):
 			thisY += inc
 		if board[thisX,thisY] != biggest:
 			if i == 0:
+				_hcache[key] = score2
 				return score2
 			else:
+				_hcache[key] = score3
 				return score3
 
 	#return score4
@@ -352,28 +408,37 @@ def heuristic(board):
 	for i in range(4):
 		if (len(h) == 0):
 			if i == 0:
+				_hcache[key] = score4
 				return score4
 			elif i == 1:
+				_hcache[key] = score5
 				return score5
 			elif i == 2:
+				_hcache[key] = score6
 				return score6
 			else:
+				_hcache[key] = score7
 				return score7
 		biggest = 0-heapq.heappop(h)
 		if board[thisX,thisY] != biggest:
 			if i == 0:
+				_hcache[key] = score4
 				return score4
 			elif i == 1:
+				_hcache[key] = score5
 				return score5
 			elif i == 2:
+				_hcache[key] = score6
 				return score6
 			else:
+				_hcache[key] = score7
 				return score7
 		if not xOrY:
 			thisX += inc
 		else:
 			thisY += inc
 
+	_hcache[key] = score8
 	return score8
 
 
@@ -394,19 +459,18 @@ def expectimax(board,maxDepth,maxNode):
 	
 	#handle maxNode
 	if maxNode:
-		for i in range(4):
-			newBoard = np.copy(board)
-			moveLeft(newBoard)
-			left = expectimax(newBoard,maxDepth-1,False)
-			newBoard = np.copy(board)
-			moveRight(newBoard)
-			right = expectimax(newBoard,maxDepth-1,False)
-			newBoard = np.copy(board)
-			moveUp(newBoard)
-			up = expectimax(newBoard,maxDepth-1,False)
-			newBoard = np.copy(board)
-			moveDown(newBoard)
-			down = expectimax(newBoard,maxDepth-1,False)
+		newBoard = np.copy(board)
+		moveLeft(newBoard)
+		left = expectimax(newBoard,maxDepth-1,False)
+		newBoard = np.copy(board)
+		moveRight(newBoard)
+		right = expectimax(newBoard,maxDepth-1,False)
+		newBoard = np.copy(board)
+		moveUp(newBoard)
+		up = expectimax(newBoard,maxDepth-1,False)
+		newBoard = np.copy(board)
+		moveDown(newBoard)
+		down = expectimax(newBoard,maxDepth-1,False)
 		return max(left,right,up,down)
 	
 	#handle expectiNode
@@ -443,15 +507,15 @@ def genius(board):
 	
 	#SET MAXDEPTH HERE
 	#this needs to be changed
-	maxDepth = 2
+	maxDepth = 3
 	if numUnf > 12:
 		maxDepth = 1
 	elif numUnf > 9:
 		maxDepth = 1
 	elif numUnf > 5:
-		maxDepth = 1
+		maxDepth = 2
 	elif numUnf > 2:
-		maxDepth = 1
+		maxDepth = 2
 	
 	#don't like this much
 	best = -10000
@@ -505,97 +569,7 @@ def evaluateHeuristic():
 	print(heuristic(testBoard))
 
 
-def heuristicTest(theBoard,count):
-	#show board
-	for y in range(4):
-		print ("+-----+-----+-----+-----+\n|", end = "")
-		for x in range(4):
-			if theBoard[x,y] == 0:
-				print ("     |", end = "")
-			elif theBoard[x,y] < 10:
-				print(" ", end = " ")
-				print(theBoard[x,y], end = "  |")
-			elif theBoard[x,y] < 100:
-				print (" ", end = "")
-				print(theBoard[x,y], end = "  |")
-			elif theBoard[x,y] < 1000:
-				print (" ", end = "")
-				print(theBoard[x,y], end = " |")
-			elif theBoard[x,y] < 10000:
-				print (" ", end = "")
-				print(theBoard[x,y], end = "|")
-			elif theBoard[x,y] < 100000:
-				print(theBoard[x,y], end = "|")
-		print ("\n", end = "")
-	print ("+-----+-----+-----+-----+")
-	
-	if inEndState(theBoard):
-		print("        Game Over")
-		return
-		
-	change = genius(theBoard)
-	if change != 0:
-		addRandomTile(theBoard)
-	heuristicTest(theBoard,count+1)
-	return
 
-def newTurn(theBoard):
-	
-	#show board
-	for y in range(4):
-		print ("+-----+-----+-----+-----+\n|", end = "")
-		for x in range(4):
-			if theBoard[x,y] == 0:
-				print ("     |", end = "")
-			elif theBoard[x,y] < 10:
-				print(" ", end = " ")
-				print(theBoard[x,y], end = "  |")
-			elif theBoard[x,y] < 100:
-				print (" ", end = "")
-				print(theBoard[x,y], end = "  |")
-			elif theBoard[x,y] < 1000:
-				print (" ", end = "")
-				print(theBoard[x,y], end = " |")
-			elif theBoard[x,y] < 10000:
-				print (" ", end = "")
-				print(theBoard[x,y], end = "|")
-			elif theBoard[x,y] < 100000:
-				print(theBoard[x,y], end = "|")
-		print ("\n", end = "")
-	print ("+-----+-----+-----+-----+")
-		
-	change = 0
-	if inEndState(theBoard):
-		print("        Game Over")
-		return
-	#userInput = raw_input('Pick a move (a, w, s, d, g for genius, q for quit): ')
-	userInput = raw_input('Pick a move (a, w, s, d, q for quit): ')
-	if userInput == "a":
-		change = moveLeft(theBoard)
-	elif userInput == "d":
-		change = moveRight(theBoard)
-	elif userInput == "w":
-		change = moveUp(theBoard)
-	elif userInput == "s":
-		change = moveDown(theBoard)
-	elif userInput == "g":
-		change = genius(theBoard)
-	elif userInput == "q":
-		return
-	if change != 0:
-		addRandomTile(theBoard)
-	newTurn(theBoard)
-	return
-
-
-aBoard = [[0 for x in range(4)] for x in range(4)]
-theBoard = np.array(aBoard)
-addRandomTile(theBoard)
-addRandomTile(theBoard)
-
-evaluateHeuristic()
-#heuristicTest(theBoard,0)
-#newTurn(theBoard)
 
 ''''
 input_var = raw_input("Enter something:")
