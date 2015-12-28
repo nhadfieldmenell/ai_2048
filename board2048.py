@@ -39,9 +39,11 @@ score8 = 22
 class Board(object):
 	def __init__(self,copyBoard = None):
 		if (copyBoard == None):
-			self.board = np.zeros((4,4))
+			self.board = np.zeros((4,4),dtype = np.int)
 			self.num2pos = defaultdict(list)
 			self.num2pos[0] = copy.copy(allPositions)
+			self.addRandomTile()
+			self.addRandomTile()
 
 		else:
 			pass
@@ -49,6 +51,21 @@ class Board(object):
 
 	def move(self,direction):
 		return
+
+	def setVal(self,x,y,val):
+		self.num2pos[self.board[x,y]].remove((x,y))
+		self.num2pos[val].append((x,y))
+		self.board[x,y] = val
+		return val
+
+	def testBoard(self):
+		#THIS IS BAD DOESNT SET NUM2POS
+		self.board = np.zeros((4,4),dtype = np.int)
+		self.board[3,3] = 4
+		self.board[3,2] = 4
+		self.board[2,3] = 4
+		self.board[2,0] = 2
+		self.newTurn()
 
 	#board is in end state if there is no free tile and no adjacent matching tiles
 	#return False if there is no possible move
@@ -61,10 +78,10 @@ class Board(object):
 		#means all spaces are full
 		for (x,y) in allPositions:
 			if y != 3:
-				if theBoard[x,y] == theBoard[x,y+1]:
+				if self.board[x,y] == self.board[x,y+1]:
 					return False
 			if x != 3:
-				if theBoard[x,y] == theBoard[x+1,y]:
+				if self.board[x,y] == self.board[x+1,y]:
 					return False
 		return True
 
@@ -83,25 +100,135 @@ class Board(object):
 		newTileNum = 2
 		if twoOrFour == 9:
 			newTileNum = 4
-		self.board[x,y] = newTileNum
-		self.num2pos[newTileNum].append((x,y))
+		print(self.num2pos)
+		self.setVal(x,y,newTileNum)
+		#self.board[x,y] = newTileNum
+		#self.num2pos[newTileNum].append((x,y))
 
 	#return a list of coordinate spaces that have a 0 tile
 	def unfilledSpots(self):
 		return num2pos[0]
 
+	def printBoard(self):
+		#show board
+		for y in range(4):
+			print ("+-----+-----+-----+-----+\n|", end = "")
+			for x in range(4):
+				if self.board[x,y] == 0:
+					print ("     |", end = "")
+				elif self.board[x,y] < 10:
+					print(" ", end = " ")
+					print(self.board[x,y], end = "  |")
+				elif self.board[x,y] < 100:
+					print (" ", end = "")
+					print(self.board[x,y], end = "  |")
+				elif self.board[x,y] < 1000:
+					print (" ", end = "")
+					print(self.board[x,y], end = " |")
+				elif self.board[x,y] < 10000:
+					print (" ", end = "")
+					print(self.board[x,y], end = "|")
+				elif self.board[x,y] < 100000:
+					print(self.board[x,y], end = "|")
+			print ("\n", end = "")
+		print ("+-----+-----+-----+-----+")
+
+	def newTurn(self):
+		print (self.num2pos)
+		#show board
+		self.printBoard()
+		change = 0
+		if self.inEndState():
+			print("        Game Over")
+			return
+		#userInput = raw_input('Pick a move (a, w, s, d, g for genius, q for quit): ')
+		userInput = raw_input('Pick a move (a, w, s, d, q for quit): ')
+		interpCmd = {'a': 'L', 'w': 'U', 'd':'R', 's': 'D'}
+		if userInput == "g":
+			change = searchEM(self.board)
+		elif userInput == "q":
+			return
+		else:
+			change = self.move(interpCmd[userInput])
+		if change != 0:
+			self.addRandomTile()
+		self.newTurn()
+		return
+
 	def move(self,direction):
-		dir2incr = {'L': (-1,0,3), 'R': (1,0,0), 'U': (0,-1,), 'D': (0,1)}
+		dir2majorAxis = {'L': (0,1,4,1,-1,0), 'R': (0,2,-1,-1,4,3), 'U': (1,1,4,1,-1,0), 'D': (1,2,-1,-1,4,3)}
 		changes = 0
-		xInc, yInc = dir2incr[direction]
+		#XorY: 0 for x is major axis, 1 for y is major axis
+		XorY, majorStart, majorEnd, inc, majorOpposite, majorDone = dir2majorAxis[direction]
+		
+		for minor in range(4):
+			#print ("minor: " + str(minor))
+			condensed = defaultdict(int)
+			for major0 in range(majorStart,majorEnd,inc):
+				#print ("major0: " + str(major0))
+				currentVal = 0
+				if not XorY:
+					currentVal = self.setVal(major0,minor,0)
+				else:
+					currentVal = self.setVal(minor,major0,0)
+				#print ("currentVal: " + str(currentVal))
+				if currentVal != 0:
+					for major1 in range(major0-inc,majorOpposite,-inc):
+						#print ("major1: " + str(major1))
+						valAtSpot = 0
+						if not XorY:
+							valAtSpot = self.board[major1,minor]
+						else:
+							valAtSpot = self.board[minor,major1]
+						#print ("valAtSpot: " + str(valAtSpot))
+						if valAtSpot != 0:
+							if valAtSpot == currentVal and condensed[major1] == 0:
+								if not XorY:
+									self.setVal(major1,minor,2*valAtSpot)
+									#self.board[major1,minor] = 2*valAtSpot
+								else:
+									self.setVal(minor,major1,2*valAtSpot)
+									#self.board[minor,major1] = 2*valAtSpot
+								changes += 1
+								condensed[major1] = 1
+							else:
+								if not XorY:
+									self.setVal(major1+inc,minor,currentVal)
+									#self.board[major1+inc,minor] = currentVal
+								else:
+									self.setVal(minor,major1+inc,currentVal)
+									#self.board[minor,major1+inc] = currentVal
+							if major1+inc != major0:
+								changes += 1
+							break
+						elif major1 == majorDone:
+							if not XorY:
+								print (str(minor) + str(major1))
+								self.setVal(majorDone,minor,currentVal)
+								#self.board[majorDone,minor] = currentVal
+								changes += 1
+								break
+							else:
+								print (str(minor) + str(major1))
+								self.setVal(minor,majorDone,currentVal)
+								#self.board[minor,majorDone] = currentVal
+								changes += 1
+								break
+		return changes
+				
+				
+			
 
-		#holds the positions of the tiles that have already been condensed so you dont condense the same space twice
-		condensed = []
-
-
-
-
-
+		
+		#for minor_axis 0->3:
+		#	for major_axis 2nd to 4th:
+		#		for condense_spot major_axis->0th:
+		#			move it through any 0s
+		#			if the first non-0 is the same value:
+		#				if it is not condensed: condense it
+		#			else:
+		#				leave the number in the last 0
+		#
 
 
 

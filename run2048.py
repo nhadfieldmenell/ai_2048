@@ -1,6 +1,6 @@
 from __future__ import print_function
 from search import searchEM
-from board2048 import addRandomTile, moveDir, inEndState, heuristic, evaluateHeuristic
+from board2048 import addRandomTile, moveDir, inEndState, heuristic, evaluateHeuristic, Board
 import numpy as np
 import pdb, sys
 sys.setrecursionlimit(100000)
@@ -99,7 +99,11 @@ def newTurn(theBoard):
 
 #evaluateHeuristic()
 
+board = Board()
+board.newTurn()
+#board.testBoard()
 
+"""
 with open('bestScores.txt','w') as f: f.write("Scores:\n")
 for i in range(25):
 	aBoard = [[0 for x in range(4)] for x in range(4)]
@@ -107,5 +111,7 @@ for i in range(25):
 	addRandomTile(theBoard)
 	addRandomTile(theBoard)
 	heuristicTest(theBoard,0)
+"""
+
 	
 #newTurn(theBoard)

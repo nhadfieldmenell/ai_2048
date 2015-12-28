@@ -102,7 +102,7 @@ def createFunction(board,*args):
 
 
 #@profile
-def searchEM(board,nodesToExpand=600):
+def searchEM(board,nodesToExpand=1000):
 	startNode = createFunction(board)
 
 	heap = []
