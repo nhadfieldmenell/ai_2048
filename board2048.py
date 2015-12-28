@@ -1,23 +1,24 @@
 from __future__ import print_function
-import sys
-import random
-import heapq
+import sys, random, heapq, copy
 import numpy as np
+from collections import defaultdict
+
+allPositions = [(x,y) for x in range(4) for y in range(4)]
 
 scoreEnd = 0
 
 #score when 0 in snaking pattern
-score0 = 3
+score0 = 5
 
 #score when 1 in snaking pattern
-score1 = 6
-score2 = 7
-score3 = 8
-score4 = 9
-score5 = 10
-score6 = 11
-score7 = 12
-score8 = 13
+score1 = 15
+score2 = 16
+score3 = 17
+score4 = 18
+score5 = 19
+score6 = 20
+score7 = 21
+score8 = 22
 
 #directions: 1 is up, 2 is right, 3 is down, 4 is left, 0 is nothing
 #corners correspond to quadrant
@@ -33,8 +34,80 @@ score8 = 13
 	+---+---+---+---+
  y3	|	|	|	|	|
 	+---+---+---+---+
-
 """
+
+class Board(object):
+	def __init__(self,copyBoard = None):
+		if (copyBoard == None):
+			self.board = np.zeros((4,4))
+			self.num2pos = defaultdict(list)
+			self.num2pos[0] = copy.copy(allPositions)
+
+		else:
+			pass
+
+
+	def move(self,direction):
+		return
+
+	#board is in end state if there is no free tile and no adjacent matching tiles
+	#return False if there is no possible move
+	#otherwise, return True
+	def inEndState(self):
+		if len(self.num2pos[0]) != 0:
+			return False
+
+
+		#means all spaces are full
+		for (x,y) in allPositions:
+			if y != 3:
+				if theBoard[x,y] == theBoard[x,y+1]:
+					return False
+			if x != 3:
+				if theBoard[x,y] == theBoard[x+1,y]:
+					return False
+		return True
+
+	#find a random open tile on the board
+	#insert a 2 there (90%)
+	#insert a 4 there (10%)
+	#return 0 if could not add tile
+	#return 1 on success
+	def addRandomTile(self):
+		if len(self.num2pos[0]) == 0:
+			return 0
+
+		(x,y) = random.choice(self.num2pos[0])
+		self.num2pos[0].remove((x,y))
+		twoOrFour = random.randrange(0,10)
+		newTileNum = 2
+		if twoOrFour == 9:
+			newTileNum = 4
+		self.board[x,y] = newTileNum
+		self.num2pos[newTileNum].append((x,y))
+
+	#return a list of coordinate spaces that have a 0 tile
+	def unfilledSpots(self):
+		return num2pos[0]
+
+	def move(self,direction):
+		dir2incr = {'L': (-1,0,3), 'R': (1,0,0), 'U': (0,-1,), 'D': (0,1)}
+		changes = 0
+		xInc, yInc = dir2incr[direction]
+
+		#holds the positions of the tiles that have already been condensed so you dont condense the same space twice
+		condensed = []
+
+
+
+
+
+
+
+
+
+
+
 
 
 #board is in end state if there is no free tile and no adjacent matching tiles
@@ -252,7 +325,7 @@ def trivialHeuristic(board):
 #only next-largest is considered so if 3rd largest is next to the largest
 #   that only counts for the largest being in the corner
 #return the # of biggest->next biggest->next biggest there is starting from one corner and going along some edge
-@profile
+#@profile
 def heuristic(board):
 	key = tuple(board.flatten())
 	if key in _hcache:
@@ -280,6 +353,9 @@ def heuristic(board):
 	if (len(h) == 0):
 		return score1
 
+	found = False
+	returnScore = 0
+
 
 	#topLeft is true if the biggest one is in the top left corner, etc.
 	topLeft = False
@@ -298,7 +374,8 @@ def heuristic(board):
 		botRight = True
 	else:
 		_hcache[key] = score0
-		return score0
+		found = True
+		returnScore = score0
 
 	#xOrY = {0,1}
 	#xOrY = 0: looking for next best along x axis
@@ -325,8 +402,8 @@ def heuristic(board):
 			thisY = 1
 			xOrY = 1
 		else:
-			_hcache[key] = score1
-			return score1
+			found = True
+			returnScore =  score1
 	elif topRight:
 		if board[2,0] == biggest:
 			thisX = 2
@@ -339,7 +416,8 @@ def heuristic(board):
 			xOrY = 1
 		else:
 			_hcache[key] = score1
-			return score1
+			found = True
+			returnScore = score1
 	elif botLeft:
 		if board[1,3] == biggest:
 			thisX = 1
@@ -352,7 +430,8 @@ def heuristic(board):
 			inc = -1
 		else:
 			_hcache[key] = score1
-			return score1
+			found = True
+			returnScore = score1
 	elif botRight:
 		if board[2,3] == biggest:
 			thisX = 2
@@ -365,17 +444,21 @@ def heuristic(board):
 			xOrY = 1
 			inc = -1
 		else:
-			_hcache[key] = score1
-			return score1
+			found = True
+			returnScore = score1
 
 	for i in range(2):
+		if found:
+			break
 		if (len(h) == 0):
 			if i == 0:
-				_hcache[key] = score2
-				return score2
+				found =  True
+				returnScore = score2
 			else:
-				_hcache[key] = score3
-				return score3
+				found = True
+				returnScore = score3
+		if found:
+			break
 		biggest = 0-heapq.heappop(h)
 		if not xOrY:
 			thisX += inc
@@ -383,11 +466,12 @@ def heuristic(board):
 			thisY += inc
 		if board[thisX,thisY] != biggest:
 			if i == 0:
-				_hcache[key] = score2
-				return score2
+				found = True
+				returnScore = score2
 			else:
-				_hcache[key] = score3
-				return score3
+				found = True
+				returnScore = score3
+
 
 	#return score4
 	#stuff below here may just make it slower
@@ -406,40 +490,49 @@ def heuristic(board):
 
 
 	for i in range(4):
+		if found:
+			break
 		if (len(h) == 0):
 			if i == 0:
-				_hcache[key] = score4
-				return score4
+				found = True
+				returnScore = score4
 			elif i == 1:
-				_hcache[key] = score5
-				return score5
+				found = True
+				returnScore = score5
 			elif i == 2:
-				_hcache[key] = score6
-				return score6
+				found = True
+				returnScore = score6
 			else:
-				_hcache[key] = score7
-				return score7
+				found = True
+				returnScore = score7
+		if found:
+			break
 		biggest = 0-heapq.heappop(h)
+		if found:
+			break
 		if board[thisX,thisY] != biggest:
 			if i == 0:
-				_hcache[key] = score4
-				return score4
+				found = True
+				returnScore = score4
 			elif i == 1:
-				_hcache[key] = score5
-				return score5
+				found = True
+				returnScore = score5
 			elif i == 2:
-				_hcache[key] = score6
-				return score6
+				found = True
+				returnScore = score6
 			else:
-				_hcache[key] = score7
-				return score7
+				found = True
+				returnScore = score7
 		if not xOrY:
 			thisX += inc
 		else:
 			thisY += inc
 
-	_hcache[key] = score8
-	return score8
+	if not found:
+		found = True
+		returnScore = score8
+	_hcache[key] = returnScore
+	return returnScore
 
 
 	
@@ -548,25 +641,25 @@ def genius(board):
 
 #this method allows you to test the heuristic on an input board
 def evaluateHeuristic():
-	testBoard = [[0 for x in range(4)] for x in range(4)]
-	testBoard = np.array(testBoard)
-	testBoard[0,0] = 11
-	testBoard[0,1] = 11
-	testBoard[0,2] = 116
-	testBoard[0,3] = 117
-	testBoard[1,0] = 11
-	testBoard[1,1] = 11
-	testBoard[1,2] = 115
-	testBoard[1,3] = 118
-	testBoard[2,0] = 10
-	testBoard[2,1] = 0
-	testBoard[2,2] = 0
-	testBoard[2,3] = 119
-	testBoard[3,0] = 6
-	testBoard[3,1] = 0
-	testBoard[3,2] = 0
-	testBoard[3,3] = 200
-	print(heuristic(testBoard))
+	testboard0 = np.array([[90, 0, 20, 0],
+							[80, 0, 0, 0],
+							[70, 0, 15, 0],
+							[0, 70, 0, 0]])
+	testboard1 = np.array([[0, 0, 0, 0],
+							[70, 0, 0, 0],
+							[80, 80, 0, 0],
+							[90, 0, 0, 0]])
+	testboard2 = np.array([[0, 0, 40, 50],
+							[20, 0, 0, 60],
+							[0, 10, 0, 70],
+							[0, 0, 20, 90]])
+	testboard3 = np.array([[0, 0, 80, 90],
+							[0, 0, 0, 0],
+							[0, 0, 0, 0],
+							[0, 0, 100, 0]])
+	for testBoard in [testboard0,testboard1,testboard2,testboard3]:
+		print (testBoard)
+		print(heuristic(testBoard))
 
 
 

@@ -12,7 +12,7 @@ import pdb
 class Node(object):
 	allNodes = {}
 
-	@profile
+	#@profile
 	def __init__(self,board,parent=None,direction='D'):
 		self.parent = parent
 		self.board = board
@@ -37,7 +37,7 @@ class Node(object):
 		key = tuple(board.flatten())
 		Node.allNodes[key] = self
 
-	@profile
+	#@profile
 	def expand(self):
 		if self.expanded:
 			return
@@ -102,12 +102,13 @@ def createFunction(board,*args):
 
 
 #@profile
-def searchEM(board,nodesToExpand=100):
+def searchEM(board,nodesToExpand=600):
 	startNode = createFunction(board)
 
 	heap = []
 	push(heap,(-startNode.score,startNode))
-	for i in range(nodesToExpand):
+	i = 0
+	while i < nodesToExpand:
 		start = time.time()
 		thisNode = pop(heap)[1]
 		if not thisNode.expanded:
@@ -117,6 +118,8 @@ def searchEM(board,nodesToExpand=100):
 					push(heap,(-childNode.score,childNode))
 				for childNode in thisNode.children4[a]:
 					push(heap,(-childNode.score,childNode))
+			i += 1
+		"""
 		else:
 			#print (i)
 			for a in ['L', 'R', 'D', 'U']:
@@ -124,8 +127,11 @@ def searchEM(board,nodesToExpand=100):
 					push(heap,(-childNode.score,childNode))
 				for childNode in thisNode.children4[a]:
 					push(heap,(-childNode.score,childNode))
+		"""
 
 		#print "time to expand:" , time.time()-start
+
+	Node.allNodes = {}
 
 	#print (startNode.bestDir)
 	#pdb.set_trace()
