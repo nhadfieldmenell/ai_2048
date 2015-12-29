@@ -1,6 +1,6 @@
 from __future__ import print_function
 from search import searchEM
-from board2048 import addRandomTile, moveDir, inEndState, heuristic, evaluateHeuristic, Board
+from board2048 import Board
 import numpy as np
 import pdb, sys
 sys.setrecursionlimit(100000)
@@ -95,8 +95,8 @@ def geniusGame():
 	while True:
 		board.printBoard()
 		if board.inEndState():
-			#print("        Game Over")
-			with open('bestScores.txt','a') as f: f.write(str(np.amax(theBoard)) + "\n")
+			print("        Game Over")
+			with open('bestScores.txt','a') as f: f.write(str(np.amax(board.board)) + "\n")
 			return
 		change = searchEM(board)
 		if change != 0:

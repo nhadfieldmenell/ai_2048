@@ -3,16 +3,21 @@
 #					pdb.pm when the error is thrown
 
 import board2048 as b2048
-from board2048 import unfilledSpots, addSpecificTile, heuristic, moveDir as move, trivialHeuristic
+from board2048 import Board
 import numpy as np
 from heapq import heappop as pop, heappush as push
 import time
 import pdb
+import gc
+
+
+
 
 #twoSpot is true if the node was created by placing a 2 on the board
 #it is false if the node was created by placing a 4 on the board
 class Node(object):
 	allNodes = {}
+	_downdateCache = {}
 
 	#@profile
 	def __init__(self,board,parent=None,direction='D'):
@@ -42,7 +47,7 @@ class Node(object):
 			for childBoard,pChild in boardChildren:
 				childNode = createFunction(childBoard,self,direction)
 				self.children[direction].append((childNode,pChild))
-		self.update()
+		#self.update()
 		self.expanded = True
 
 
@@ -57,7 +62,7 @@ class Node(object):
 			else:	
 				for child,pChild in self.children[direction]:
 					self.scores[direction] += child.score*pChild
-		self.score = 0
+		self.score = -np.inf
 		for i in ['L','R','D','U']:
 			if self.scores[i] > self.score:
 				self.score = self.scores[i]
@@ -66,9 +71,34 @@ class Node(object):
 			#print "stopped update"
 			self.parent.update()
 
-	def downdate(self):
-		bestScore = 0
-		bestDir = 'D'
+	def downdate(self,firstCall = True):
+		if firstCall:
+			Node._downdateCache = {}
+		if self in Node._downdateCache:
+			return self.score
+		if not self.expanded:
+			Node._downdateCache[self] = self.score
+			return self.score
+		
+		for direction in ['L','R','D','U']:
+			self.scores[direction] = 0
+			if len(self.children[direction]) == 0:
+				self.scores[direction] = -np.inf
+			else:	
+				for child,pChild in self.children[direction]:
+					self.scores[direction] += child.downdate(False)*pChild
+
+		self.score = -np.inf
+		for i in ['L','R','D','U']:
+			if self.scores[i] > self.score:
+				self.score = self.scores[i]
+				self.bestDir = i
+
+		Node._downdateCache[self] = self.score
+		return self.score
+
+	def __hash__(self):
+		return hash(self.board)
 
 
 def createFunction(board,*args):
@@ -80,7 +110,7 @@ def createFunction(board,*args):
 
 
 #@profile
-def searchEM(board,nodesToExpand=50):
+def searchEM(board,nodesToExpand=600):
 	startNode = createFunction(board)
 
 	heap = []
@@ -102,6 +132,7 @@ def searchEM(board,nodesToExpand=50):
 
 	#print (startNode.bestDir)
 	#pdb.set_trace()
+	startNode.downdate()
 	return board.move(startNode.bestDir)
 	#return move(startNode.board,startNode.bestDir)
 

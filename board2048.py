@@ -36,7 +36,9 @@ class Board(object):
 		else:
 			self.board = copyBoard.board.copy()
 			self.key = copyBoard.key
-			self.num2pos = copy.deepcopy(copyBoard.num2pos)
+			self.num2pos = defaultdict(list)
+			for pos in allPositions:
+				self.num2pos[self.board[pos]].append(pos)
 
 
 	def setVal(self,x,y,val):
@@ -262,6 +264,8 @@ class Board(object):
 		#				leave the number in the last 0
 		#
 
+	def __hash__(self):
+		return hash(self.key)
 	
 	def getSnake(self):
 		biggest = 65536
@@ -386,20 +390,21 @@ class Board(object):
 		
 		return snakeList
 
+	@profile
 	def heuristic(self):
-		if self.key in _hcache:
-			return _hcache[self.key]
+		#if self.key in _hcache:
+		#	return _hcache[self.key]
 
 		biggest = 65536
 		biggest,biggestCount = self.findNextBiggest(biggest,0)
 
 		if self.inEndState():
-			_hcache[self.key] = -biggest
+		#	_hcache[self.key] = -biggest
 			return -biggest
 		
 		
 		if self.findNextBiggest(biggest,biggestCount)[0] == 0:
-			_hcache[self.key] = score1
+		#	_hcache[self.key] = score1
 			return score1
 
 		snake = self.getSnake()
@@ -407,7 +412,7 @@ class Board(object):
 		for point in snake:
 			totalScore += self.board[point]
 
-		_hcache[self.key] = totalScore
+		#_hcache[self.key] = totalScore
 		return totalScore
 
 		
