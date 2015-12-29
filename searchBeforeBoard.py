@@ -18,45 +18,71 @@ class Node(object):
 	def __init__(self,board,parent=None,direction='D'):
 		self.parent = parent
 		self.board = board
-		self.children = {}
+		self.children2 = {}
+		self.children4 = {}
 		for a in ['L', 'R', 'D', 'U']:
-			self.children[a] = []
+			self.children2[a] = []
+		for a in ['L', 'R', 'D', 'U']:
+			self.children4[a] = []
+		self.unf = {}
+		for a in ['L', 'R', 'D', 'U']:
+			self.unf[a] = 0
 		self.scores = {}
 		for a in ['L', 'R', 'D', 'U']:
 			self.scores[a] = 0
-		self.score = board.heuristic()
+		self.score = heuristic(board)
+		#self.score = trivialHeuristic(board)
 		self.bestDir = 'R'
 		self.initialBest = 'R'
 		self.moveDir = direction
 		self.expanded = False
-		Node.allNodes[board.key] = self
+		key = tuple(board.flatten())
+		Node.allNodes[key] = self
 
 	
+
 	#@profile
 	def expand(self):
 		if self.expanded:
 			return
 		self.score = 0
 		for direction in ['L','R','D','U']:
-			boardChildren = self.board.getChildren(direction)
-			for childBoard,pChild in boardChildren:
-				childNode = createFunction(childBoard,self,direction)
-				self.children[direction].append((childNode,pChild))
-		self.update()
+			newBoard = np.copy(self.board)
+			if not move(newBoard,direction):
+				self.scores[direction] = -np.inf
+				continue
+			unf = unfilledSpots(newBoard)
+			self.unf[direction] = float(len(unf))
+			weight = float(1/self.unf[direction])
+			for spot in unf:
+				newerBoard = np.copy(newBoard)
+				addSpecificTile(newerBoard,2,spot[0],spot[1])
+				newNode = createFunction(newerBoard,self,direction)
+				self.scores[direction] += 0.9*weight*newNode.score
+				self.children2[direction].append(newNode)
+				newerBoard = np.copy(newBoard)
+				addSpecificTile(newerBoard,4,spot[0],spot[1])
+				newNode = createFunction(newerBoard,self,direction)
+				self.scores[direction] += 0.1*weight*newNode.score
+				self.children4[direction].append(newNode)
+			if self.scores[direction] > self.score:
+				self.score = self.scores[direction]
+				self.bestDir = direction
+		if self.parent:
+			self.parent.update()
 		self.expanded = True
-
-
 
 	#each time that you call update, find the best direction
 	def update(self):
 		origScore = self.score
 		for direction in ['L','R','D','U']:
 			self.scores[direction] = 0
-			if len(self.children[direction]) == 0:
-				self.scores[direction] = -np.inf
-			else:	
-				for child,pChild in self.children[direction]:
-					self.scores[direction] += child.score*pChild
+			if self.unf[direction]:
+				weight = float(1/self.unf[direction])
+				for child in self.children2[direction]:
+					self.scores[direction] += 0.9*weight*child.score
+				for child in self.children4[direction]:
+					self.scores[direction] += 0.1*weight*child.score
 		self.score = 0
 		for i in ['L','R','D','U']:
 			if self.scores[i] > self.score:
@@ -72,7 +98,7 @@ class Node(object):
 
 
 def createFunction(board,*args):
-	key = board.key
+	key = tuple(board.flatten())
 	if key in Node.allNodes:
 		return Node.allNodes[key]
 	else:
@@ -80,7 +106,7 @@ def createFunction(board,*args):
 
 
 #@profile
-def searchEM(board,nodesToExpand=50):
+def searchEM(board,nodesToExpand=1000):
 	startNode = createFunction(board)
 
 	heap = []
@@ -92,9 +118,20 @@ def searchEM(board,nodesToExpand=50):
 		if not thisNode.expanded:
 			thisNode.expand()
 			for a in ['L', 'R', 'D', 'U']:
-				for childNode,_ in thisNode.children[a]:
+				for childNode in thisNode.children2[a]:
+					push(heap,(-childNode.score,childNode))
+				for childNode in thisNode.children4[a]:
 					push(heap,(-childNode.score,childNode))
 			i += 1
+		"""
+		else:
+			#print (i)
+			for a in ['L', 'R', 'D', 'U']:
+				for childNode in thisNode.children2[a]:
+					push(heap,(-childNode.score,childNode))
+				for childNode in thisNode.children4[a]:
+					push(heap,(-childNode.score,childNode))
+		"""
 
 		#print "time to expand:" , time.time()-start
 
@@ -102,7 +139,7 @@ def searchEM(board,nodesToExpand=50):
 
 	#print (startNode.bestDir)
 	#pdb.set_trace()
-	return board.move(startNode.bestDir)
+	return move(board,startNode.bestDir)
 	#return move(startNode.board,startNode.bestDir)
 
 

@@ -90,6 +90,19 @@ def newTurn(theBoard):
 	newTurn(theBoard)
 	return
 
+def geniusGame():
+	board = Board()
+	while True:
+		board.printBoard()
+		if board.inEndState():
+			#print("        Game Over")
+			with open('bestScores.txt','a') as f: f.write(str(np.amax(theBoard)) + "\n")
+			return
+		change = searchEM(board)
+		if change != 0:
+			board.addRandomTile()
+		
+
 
 #aBoard = [[0 for x in range(4)] for x in range(4)]
 #theBoard = np.array(aBoard)
@@ -99,9 +112,11 @@ def newTurn(theBoard):
 
 #evaluateHeuristic()
 
-board = Board()
-board.newTurn()
-#board.testBoard()
+#board = Board()
+#board.newTurn()
+#board.testSnake()
+
+geniusGame()
 
 """
 with open('bestScores.txt','w') as f: f.write("Scores:\n")
