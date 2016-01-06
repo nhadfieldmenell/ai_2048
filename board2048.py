@@ -228,10 +228,8 @@ class Board(object):
 							else:
 								if not XorY:
 									self.setVal(major1+inc,minor,currentVal)
-									#self.board[major1+inc,minor] = currentVal
 								else:
 									self.setVal(minor,major1+inc,currentVal)
-									#self.board[minor,major1+inc] = currentVal
 							if major1+inc != major0:
 								changes += 1
 							break
@@ -239,7 +237,6 @@ class Board(object):
 							if not XorY:
 								#print (str(minor) + str(major1))
 								self.setVal(majorDone,minor,currentVal)
-								#self.board[majorDone,minor] = currentVal
 								changes += 1
 								break
 							else:
