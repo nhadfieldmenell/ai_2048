@@ -94,9 +94,10 @@ def geniusGame():
 	board = Board()
 	while True:
 		board.printBoard()
+		print(board.largest)
 		if board.inEndState():
 			print("        Game Over")
-			with open('bestScores.txt','a') as f: f.write(str(np.amax(board.board)) + "\n")
+			with open('bestScores.txt','a') as f: f.write("0.2: " + str(np.amax(board.board)) + "\n")
 			return
 		change = searchEM(board)
 		if change != 0:
@@ -116,7 +117,7 @@ def geniusGame():
 #board.newTurn()
 #board.testSnake()
 
-geniusGame()
+for i in range(5): geniusGame()
 
 """
 with open('bestScores.txt','w') as f: f.write("Scores:\n")

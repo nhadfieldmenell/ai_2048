@@ -30,10 +30,13 @@ class Board(object):
 			self.key = tuple(self.board.flatten())
 			self.num2pos = defaultdict(list)
 			self.num2pos[0] = copy.copy(allPositions)
-			self.addRandomTile()
-			self.addRandomTile()
+			tile0 = self.addRandomTile()
+			tile1 = self.addRandomTile()
+			self.largest = max(tile0,tile1)
+
 
 		else:
+			self.largest = copyBoard.largest
 			self.board = copyBoard.board.copy()
 			self.key = copyBoard.key
 			self.num2pos = defaultdict(list)
@@ -69,30 +72,45 @@ class Board(object):
 	def testSnake(self):
 		self.board = np.zeros((4,4),dtype = np.int)
 		self.num2pos[0] = copy.copy(allPositions)
-		self.setVal(0,3,64)
+		self.num2pos[2] = []
+		self.num2pos[4] = []
+		self.setVal(0,3,128)
+		print (self.board)
 		print (self.heuristic())
 		print (self.getSnake())
-		self.setVal(0,2,32)
+		self.setVal(0,2,64)
+		print (self.board)
 		print (self.heuristic())
 		print (self.getSnake())
 		self.setVal(0,1,16)
+		print (self.board)
 		print (self.heuristic())
 		print (self.getSnake())
 		self.setVal(0,0,8)
+		print (self.board)
+		print (self.heuristic())
+		print (self.getSnake())
+		self.setVal(1,3,32)
+		print (self.board)
 		print (self.heuristic())
 		print (self.getSnake())
 		self.setVal(1,3,2)
+		print (self.board)
 		print (self.heuristic())
 		print (self.getSnake())
 		self.setVal(1,1,4)
+		print (self.board)
 		print (self.heuristic())
 		print (self.getSnake())
 		self.setVal(1,0,4)
+		print (self.board)
 		print (self.heuristic())
 		print (self.getSnake())
-		self.setVal(2,0,2048)
+		self.setVal(2,0,64)
+		print (self.board)
 		print (self.getSnake())
 		print (self.heuristic())
+		"""
 		newBoard = Board(self)
 		print (self.board)
 		print (self.num2pos)
@@ -103,6 +121,7 @@ class Board(object):
 		print (self.num2pos)
 		print (newBoard.board)
 		print (newBoard.num2pos)
+		"""
 
 
 
@@ -140,6 +159,7 @@ class Board(object):
 			newTileNum = 4
 		#print(self.num2pos)
 		self.setVal(x,y,newTileNum)
+		return newTileNum
 
 	#return a list of coordinate spaces that have a 0 tile
 	def unfilledSpots(self):
@@ -223,6 +243,7 @@ class Board(object):
 									self.setVal(major1,minor,2*valAtSpot)
 								else:
 									self.setVal(minor,major1,2*valAtSpot)
+								self.largest = max(self.largest,2*valAtSpot)
 								changes += 1
 								condensed[major1] = 1
 							else:
@@ -263,12 +284,17 @@ class Board(object):
 
 	def __hash__(self):
 		return hash(self.key)
+
+	def theBiggest(self):
+		biggest = 65536
+
 	
 	def getSnake(self):
 		biggest = 65536
 		biggest,biggestCount = self.findNextBiggest(biggest,0)
 
 		snakeList = []
+		secondarySnake = []
 
 		#topLeft is true if the biggest one is in the top left corner, etc.
 		topLeft = False
@@ -288,7 +314,7 @@ class Board(object):
 			snakeList.append((3,3))
 			botRight = True
 		else:
-			return []
+			return snakeList,secondarySnake,biggest
 
 		#xOrY = {0,1}
 		#xOrY = 0: looking for next best along x axis
@@ -304,6 +330,9 @@ class Board(object):
 		thisX = 0
 		thisY = 0
 
+		snakeBroken = False
+		lastTile = 0
+
 		if topLeft:
 			if self.board[1,0] == biggest:
 				thisX,thisY,xOrY = 1,0,0
@@ -311,8 +340,16 @@ class Board(object):
 			elif self.board[0,1] == biggest:
 				snakeList.append((0,1))
 				thisX,thisY,xOrY = 0,1,1
+			elif self.board[1,0] > self.board[0,1]:
+				thisX,thisY,xOrY = 1,0,0
+				snakeBroken = True
+				secondarySnake.append((1,0))
+				lastTile = self.board[1,0]
 			else:
-				return snakeList
+				secondarySnake.append((0,1))
+				thisX,thisY,xOrY = 0,1,1
+				snakeBroken = True
+				lastTile = self.board[1,1]
 		elif topRight:
 			if self.board[2,0] == biggest:
 				snakeList.append((2,0))
@@ -320,8 +357,16 @@ class Board(object):
 			elif self.board[3,1] == biggest:
 				snakeList.append((3,1))
 				thisX,thisY,xOrY = 3,1,1
+			elif self.board[2,0] > self.board[3,1]:
+				secondarySnake.append((2,0))
+				thisX,thisY,xOrY,inc = 2,0,0,-1
+				snakeBroken = True
+				lastTile = self.board[2,0]
 			else:
-				return snakeList
+				secondarySnake.append((3,1))
+				thisX,thisY,xOrY = 3,1,1
+				snakeBroken = True
+				lastTile = self.board[3,1]
 		elif botLeft:
 			if self.board[1,3] == biggest:
 				thisX,thisY,xOrY = 1,3,0
@@ -329,8 +374,16 @@ class Board(object):
 			elif self.board[0,2] == biggest:
 				snakeList.append((0,2))
 				thisX,thisY,xOrY,inc = 0,2,1,-1
+			elif self.board[1,3] > self.board[0,2]:
+				snakeBroken = True
+				thisX,thisY,xOrY = 1,3,0
+				secondarySnake.append((1,3))
+				lastTile = self.board[1,3]
 			else:
-				return snakeList
+				snakeBroken = True
+				secondarySnake.append((0,2))
+				thisX,thisY,xOrY,inc = 0,2,1,-1
+				lastTile = self.board[0,2]
 		elif botRight:
 			if self.board[2,3] == biggest:
 				snakeList.append((2,3))
@@ -338,23 +391,46 @@ class Board(object):
 			elif self.board[3,2] == biggest:
 				snakeList.append((3,2))
 				thisX,thisY,xOrY,inc = 3,2,1,-1
+			elif self.board[2,3] > self.board[3,2]:
+				snakeBroken = True
+				secondarySnake.append((2,3))
+				thisX,thisY,xOrY,inc = 2,3,0,-1
+				lastTile = self.board[2,3]
 			else:
-				return snakeList
+				snakeBroken = True
+				snakeList.append((3,2))
+				thisX,thisY,xOrY,inc = 3,2,1,-1
+				lastTile = self.board[3,2]
 		else:
-			return snakeList
+			return snakeList,secondarySnake,biggest
 		
 		for i in range(2):
-			if self.findNextBiggest(biggest,biggestCount)[0] == 0:
-				return snakeList
-			biggest,biggestCount = self.findNextBiggest(biggest,biggestCount)
-			if not xOrY:
-				thisX += inc
+			if not snakeBroken:
+				if self.findNextBiggest(biggest,biggestCount)[0] == 0:
+					return snakeList,secondarySnake,biggest
+				biggest,biggestCount = self.findNextBiggest(biggest,biggestCount)
+				if not xOrY:
+					thisX += inc
+				else:
+					thisY += inc
+				if self.board[thisX,thisY] != biggest:
+					snakeBroken = True
+					lastTile = self.board[thisX,thisY]
+					secondarySnake.append((thisX,thisY))
+				else:
+					snakeList.append((thisX,thisY))
 			else:
-				thisY += inc
-			if self.board[thisX,thisY] != biggest:
-				return snakeList
-			else:
-				snakeList.append((thisX,thisY))
+				if not xOrY:
+					thisX += inc
+				else:
+					thisY += inc
+				if self.board[thisX,thisY] == 0:
+					return snakeList,secondarySnake,biggest
+				if self.board[thisX,thisY] <= lastTile:
+					lastTile = self.board[thisX,thisY]
+					secondarySnake.append((thisX,thisY))
+				else:
+					return snakeList,secondarySnake,biggest
 
 		inc = -inc
 
@@ -371,23 +447,38 @@ class Board(object):
 
 
 		for i in range(4):
-			biggest,biggestCount = self.findNextBiggest(biggest,biggestCount)
-			if biggest == 0:
-				return snakeList
 
-			if self.board[thisX,thisY] != biggest:
-				return snakeList
+			if not snakeBroken:
+				biggest,biggestCount = self.findNextBiggest(biggest,biggestCount)
+				if biggest == 0:
+					return snakeList,secondarySnake,biggest
+
+				if self.board[thisX,thisY] != biggest:
+					snakeBroken = True
+					secondarySnake.append((thisX,thisY))
+				else:
+					snakeList.append((thisX,thisY))
+				if not xOrY:
+					thisX += inc
+				else:
+					thisY += inc
 			else:
-				snakeList.append((thisX,thisY))
-			if not xOrY:
-				thisX += inc
-			else:
-				thisY += inc
+				if self.board[thisX,thisY] == 0:
+					return snakeList,secondarySnake,biggest
+				if self.board[thisX,thisY] <= lastTile:
+					lastTile = self.board[thisX,thisY]
+					secondarySnake.append((thisX,thisY))
+				else:
+					return snakeList,secondarySnake,biggest
+				if not xOrY:
+					thisX += inc
+				else:
+					thisY += inc
 
-		
-		return snakeList
+		biggest,biggestCount = self.findNextBiggest(biggest,biggestCount)
+		return snakeList,secondarySnake,biggest
 
-	@profile
+	#@profile
 	def heuristic(self):
 		#if self.key in _hcache:
 		#	return _hcache[self.key]
@@ -402,12 +493,23 @@ class Board(object):
 		
 		if self.findNextBiggest(biggest,biggestCount)[0] == 0:
 		#	_hcache[self.key] = score1
-			return score1
+			return biggest
 
-		snake = self.getSnake()
-		totalScore = 0
+		snake,secondarySnake,biggest = self.getSnake()
+		snakeScore = 0
 		for point in snake:
-			totalScore += self.board[point]
+			snakeScore += self.board[point]
+
+		secondaryScore = 0
+		for point in secondarySnake:
+			secondaryScore += self.board[point]
+
+		snakeWeight = 0.1
+		unfilledWeight = 0.7
+		secondaryWeight = 1.0-snakeWeight-unfilledWeight
+
+		totalScore = snakeWeight*snakeScore + secondaryWeight*secondaryScore + unfilledWeight*len(self.num2pos[0])
+
 
 		#_hcache[self.key] = totalScore
 		return totalScore
