@@ -9,3 +9,16 @@ Scores:
 0.2: 512
 0.2: 256
 1024
+biggestOut: 1024
+0.2: 2048
+biggestOut: 1024
+0.2: 1024
+0.2: 512
+biggestOut: 2048
+1000 expanded: 1024
+0.2: 2048
+1000 expanded: 512
+0.2: 1024
+1000 expanded: 1024
+1000 expanded: 512
+1000 expanded: 2048

@@ -77,39 +77,57 @@ class Board(object):
 		self.setVal(0,3,128)
 		print (self.board)
 		print (self.heuristic())
-		print (self.getSnake())
+		snake,secondary,biggest = self.getSnake()
+		print (str(snake) + "," + str(secondary) + "," + str(biggest))
+		print (self.scoreOutsideSnake(snake,secondary))
 		self.setVal(0,2,64)
 		print (self.board)
 		print (self.heuristic())
-		print (self.getSnake())
+		snake,secondary,biggest = self.getSnake()
+		print (str(snake) + "," + str(secondary) + "," + str(biggest))
+		print (self.scoreOutsideSnake(snake,secondary))
 		self.setVal(0,1,16)
 		print (self.board)
 		print (self.heuristic())
-		print (self.getSnake())
+		snake,secondary,biggest = self.getSnake()
+		print (str(snake) + "," + str(secondary) + "," + str(biggest))
+		print (self.scoreOutsideSnake(snake,secondary))
 		self.setVal(0,0,8)
 		print (self.board)
 		print (self.heuristic())
-		print (self.getSnake())
+		snake,secondary,biggest = self.getSnake()
+		print (str(snake) + "," + str(secondary) + "," + str(biggest))
+		print (self.scoreOutsideSnake(snake,secondary))
 		self.setVal(1,3,32)
 		print (self.board)
 		print (self.heuristic())
-		print (self.getSnake())
+		snake,secondary,biggest = self.getSnake()
+		print (str(snake) + "," + str(secondary) + "," + str(biggest))
+		print (self.scoreOutsideSnake(snake,secondary))
 		self.setVal(1,3,2)
 		print (self.board)
 		print (self.heuristic())
-		print (self.getSnake())
+		snake,secondary,biggest = self.getSnake()
+		print (str(snake) + "," + str(secondary) + "," + str(biggest))
+		print (self.scoreOutsideSnake(snake,secondary))
 		self.setVal(1,1,4)
 		print (self.board)
 		print (self.heuristic())
-		print (self.getSnake())
+		snake,secondary,biggest = self.getSnake()
+		print (str(snake) + "," + str(secondary) + "," + str(biggest))
+		print (self.scoreOutsideSnake(snake,secondary))
 		self.setVal(1,0,4)
 		print (self.board)
 		print (self.heuristic())
-		print (self.getSnake())
+		snake,secondary,biggest = self.getSnake()
+		print (str(snake) + "," + str(secondary) + "," + str(biggest))
+		print (self.scoreOutsideSnake(snake,secondary))
 		self.setVal(2,0,64)
 		print (self.board)
 		print (self.getSnake())
-		print (self.heuristic())
+		snake,secondary,biggest = self.getSnake()
+		print (str(snake) + "," + str(secondary) + "," + str(biggest))
+		print (self.scoreOutsideSnake(snake,secondary))
 		"""
 		newBoard = Board(self)
 		print (self.board)
@@ -478,6 +496,14 @@ class Board(object):
 		biggest,biggestCount = self.findNextBiggest(biggest,biggestCount)
 		return snakeList,secondarySnake,biggest
 
+	def scoreOutsideSnake(self,snake,secondary):
+		nodes = copy.copy(allPositions)
+		for i in snake: nodes.remove(i)
+		for i in secondary: nodes.remove(i)
+		scoreOut = 0
+		for i in nodes: scoreOut += self.board[i]
+		return scoreOut
+
 	#@profile
 	def heuristic(self):
 		#if self.key in _hcache:
@@ -488,14 +514,14 @@ class Board(object):
 
 		if self.inEndState():
 		#	_hcache[self.key] = -biggest
-			return -biggest
+			return -biggest*2
 		
 		
 		if self.findNextBiggest(biggest,biggestCount)[0] == 0:
 		#	_hcache[self.key] = score1
 			return biggest
 
-		snake,secondarySnake,biggest = self.getSnake()
+		snake,secondarySnake,biggestOut = self.getSnake()
 		snakeScore = 0
 		for point in snake:
 			snakeScore += self.board[point]
@@ -504,11 +530,16 @@ class Board(object):
 		for point in secondarySnake:
 			secondaryScore += self.board[point]
 
-		snakeWeight = 0.1
-		unfilledWeight = 0.7
+		snakeWeight = 0.5
+		unfilledWeight = 0.05
 		secondaryWeight = 1.0-snakeWeight-unfilledWeight
 
+		adjustedUnfilled = len(self.num2pos[0])*self.largest
+
 		totalScore = snakeWeight*snakeScore + secondaryWeight*secondaryScore + unfilledWeight*len(self.num2pos[0])
+
+		penaltyWeight = 0.2
+		totalScore -= penaltyWeight*biggestOut
 
 
 		#_hcache[self.key] = totalScore
