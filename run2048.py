@@ -112,11 +112,19 @@ def geniusGame():
 
 #evaluateHeuristic()
 
-#board = Board()
-#board.newTurn()
+
 #board.testSnake()
 
-for i in range(5): geniusGame()
+correctInput = False
+while not correctInput:
+	userInput = raw_input('Would you like to play (enter "p") or watch the ai play (enter "ai")?\n')
+	if userInput == "p":
+		correctInput = True
+		board = Board()
+		board.newTurn()
+	elif userInput == "ai":
+		correctInput = True
+		for i in range(5): geniusGame()
 
 """
 with open('bestScores.txt','w') as f: f.write("Scores:\n")

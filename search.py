@@ -110,7 +110,7 @@ def createFunction(board,*args):
 
 
 #@profile
-def searchEM(board,nodesToExpand=10000):
+def searchEM(board,nodesToExpand=3000):
 	startNode = createFunction(board)
 
 	heap = []
@@ -118,6 +118,8 @@ def searchEM(board,nodesToExpand=10000):
 	i = 0
 	while i < nodesToExpand:
 		start = time.time()
+		if len(heap) == 0:
+			break
 		thisNode = pop(heap)[1]
 		if not thisNode.expanded:
 			thisNode.expand()
